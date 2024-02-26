@@ -1,0 +1,26 @@
+{
+  "name": "ehchadservicesbot",
+  "version": "1.0.0",
+  "description": "EhChads Latest up to date discord bot.",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevEhChad/EhChadServicesDiscordBot.git"
+  },
+  "author": "DevEhChad",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DevEhChad/EhChadServicesDiscordBot/issues"
+  },
+  "homepage": "https://github.com/DevEhChad/EhChadServicesDiscordBot#readme",
+  "dependencies": {
+    "@discordjs/voice": "^0.16.1",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "mongoose": "^8.2.0",
+    "ms": "^2.1.3"
+  }
+}
