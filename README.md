@@ -7,7 +7,9 @@
  Discord Bot: EhChadServices#7209
 
  I'm trying to keep this bot coded in the latest Discord.js version.
+ 
  Current Bot Version: Discord.js@14.14.1
 
  Thanks for reading! 
+
     ~EhChadServices Developement Team
