@@ -12,7 +12,7 @@ let status = [
         url: 'https://twitch.tv/ehchad'
     },
     {
-        name: 'Follow EhChad on Twitch',
+        name: 'Follow EhChad on Twitch!',
         type: ActivityType.Streaming,
         url: 'https://twitch.tv/ehchad'
     },
