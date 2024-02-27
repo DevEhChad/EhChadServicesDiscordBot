@@ -28,7 +28,7 @@ const {
   
       if (targetUser.id === interaction.guild.ownerId) {
         await interaction.editReply(
-          "You can't ban that user because they're the server owner."
+          "You can't kick that user because they're the server owner."
         );
         return;
       }
@@ -39,44 +39,44 @@ const {
   
       if (targetUserRolePosition >= requestUserRolePosition) {
         await interaction.editReply(
-          "You can't ban that user because they have the same/higher role than you."
+          "You can't kick that user because they have the same/higher role than you."
         );
         return;
       }
   
       if (targetUserRolePosition >= botRolePosition) {
         await interaction.editReply(
-          "I can't ban that user because they have the same/higher role than me."
+          "I can't kick that user because they have the same/higher role than me."
         );
         return;
       }
   
-      // Ban the targetUser
+      // Kick the targetUser
       try {
-        await targetUser.ban({ reason });
+        await targetUser.kick({ reason });
         await interaction.editReply(
-          `User ${targetUser} was banned\nReason: ${reason}`
+          `User ${targetUser} was kicked\nReason: ${reason}`
         );
       } catch (error) {
-        console.log(`There was an error when banning: ${error}`);
+        console.log(`There was an error when kicking: ${error}`);
       }
     },
   
-    name: 'ban',
-    description: 'Bans a member from this server.',
+    name: 'kick',
+    description: 'Kicks a member from this server.',
     options: [
       {
         name: 'target-user',
-        description: 'The user you want to ban.',
+        description: 'The user you want to kick.',
         type: ApplicationCommandOptionType.Mentionable,
         required: true,
       },
       {
         name: 'reason',
-        description: 'The reason you want to ban.',
+        description: 'The reason you want to kick.',
         type: ApplicationCommandOptionType.String,
       },
     ],
-    permissionsRequired: [PermissionFlagsBits.BanMembers],
-    botPermissions: [PermissionFlagsBits.BanMembers],
+    permissionsRequired: [PermissionFlagsBits.KickMembers],
+    botPermissions: [PermissionFlagsBits.KickMembers],
   };
