@@ -10,18 +10,18 @@ module.exports = {
         {
         name: 'target-user',
         description: 'The user you are banning.',
-        required: true,
         type: ApplicationCommandOptionType.Mentionable,
+        required: true,
         },
         {
         name: 'reason',
         description: 'The reason for the banning.',
-        required: true,
         type: ApplicationCommandOptionType.String,
+        required: true,
         },
     ],
-    permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.Administrator],
+    permissionsRequired: [PermissionFlagsBits.BanMembers],
+    botPermissions: [PermissionFlagsBits.BanMembers],
 
     callback: (client, interaction) => {
         interaction.reply(`Ban..`)
