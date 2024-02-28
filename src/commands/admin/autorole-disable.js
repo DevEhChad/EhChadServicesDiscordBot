@@ -22,7 +22,6 @@ module.exports = {
       console.log(error);
     }
   },
-
   name: 'autorole-disable',
   description: 'Disable auto-role in this server.',
   permissionsRequired: [PermissionFlagsBits.Administrator],

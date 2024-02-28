@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, IntentsBitField } = require('discord.js');
+const { REST, Routes, Client, IntentsBitField } = require('discord.js');
 const mongoose = require('mongoose');
 const eventHandler = require('./handlers/eventHandler');
 
@@ -12,6 +12,7 @@ const client = new Client({
         IntentsBitField.Flags.MessageContent,
     ],
 });
+
 (async () => {
     try {
     mongoose.set('strictQuery', false);

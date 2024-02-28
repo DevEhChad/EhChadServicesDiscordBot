@@ -40,7 +40,6 @@ module.exports = {
       console.log(error);
     }
   },
-
   name: 'autorole-configure',
   description: 'Configure your auto-role for this server.',
   options: [
