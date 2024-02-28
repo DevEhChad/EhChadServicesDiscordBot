@@ -1,5 +1,5 @@
 const { Client, Message } = require('discord.js');
-const Level = require('../../models/level');
+const Level = require('../../schemas/level');
 const calculateLevelXp = require('../../utils/calculateLevelXp');
 
 function getRandomXp(min, max) {
