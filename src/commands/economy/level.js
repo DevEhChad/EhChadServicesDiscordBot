@@ -6,7 +6,7 @@ const {
   } = require('discord.js');
   const canvacord = require('canvacord');
   const calculateLevelXp = require('../../utils/calculateLevelXp');
-  const Level = require('../../schemas/Level');
+  const Level = require('../../schemas/level');
   
   module.exports = {
     /**
