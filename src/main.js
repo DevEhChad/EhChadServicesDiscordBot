@@ -11,7 +11,11 @@ const client = new Client({
         IntentsBitField.Flags.MessageContent,
     ],
 });
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> b409564e0caf7706f24d416082cfa457272910d6
 (async () => {
     try {
     mongoose.set('strictQuery', false);
