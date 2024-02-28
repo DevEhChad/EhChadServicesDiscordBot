@@ -61,8 +61,6 @@ const {
         console.log(`There was an error when kicking: ${error}`);
       }
     },
-  
-    deleted: true,
     name: 'kick',
     description: 'Kicks a member from this server.',
     options: [

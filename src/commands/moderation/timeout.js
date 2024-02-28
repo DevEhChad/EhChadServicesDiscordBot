@@ -67,8 +67,6 @@ module.exports = {
       console.log(`There was an error when timing out: ${error}`);
     }
   },
-
-  deleted: true,
   name: 'timeout',
   description: 'Timeout a user.',
   options: [
