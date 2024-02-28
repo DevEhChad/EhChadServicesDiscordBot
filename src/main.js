@@ -11,7 +11,7 @@ const client = new Client({
         IntentsBitField.Flags.MessageContent,
     ],
 });
-
+ 
 (async () => {
     try {
     mongoose.set('strictQuery', false);
