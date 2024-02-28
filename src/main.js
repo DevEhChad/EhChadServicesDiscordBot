@@ -8,6 +8,7 @@ const client = new Client({
         IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMembers,
         IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildPresences,
         IntentsBitField.Flags.MessageContent,
     ],
 });
@@ -15,7 +16,7 @@ const client = new Client({
     try {
     mongoose.set('strictQuery', false);
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Conneted to EhChadServices DB.');
+    console.log('✅ Conneted to EhChadServices DB. ✅');
 
     eventHandler(client);
 

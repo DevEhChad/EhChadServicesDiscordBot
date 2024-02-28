@@ -20,7 +20,7 @@ let status = [
 
 
 module.exports = (client) => {
-    console.log(`${client.user.tag} is finally now online!`);
+    console.log(`✅ ${client.user.tag} is now online! ✅`);
 
     setInterval(() => {
         let random = Math.floor(Math.random() * status.length);

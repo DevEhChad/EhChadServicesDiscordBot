@@ -18,9 +18,11 @@
   "homepage": "https://github.com/DevEhChad/EhChadServicesDiscordBot#readme",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
+    "canvacord": "^5.4.10",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "mongoose": "^8.2.0",
-    "ms": "^2.1.3"
+    "ms": "^2.1.3",
+    "pretty-ms": "^9.0.0"
   }
 }
