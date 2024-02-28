@@ -1,4 +1,4 @@
-const { devs, testServer } = require('../../../config.json');
+const { devs, mainServer } = require('../../../config.json');
 const getLocalCommands = require('../../utils/getLocalCommands');
 
 module.exports = async (client, interaction) => {
@@ -24,7 +24,7 @@ module.exports = async (client, interaction) => {
     }
 
     if (commandObject.testOnly) {
-      if (!(interaction.guild.id === testServer)) {
+      if (!(interaction.guild.id === mainServer)) {
         interaction.reply({
           content: 'This command cannot be ran here.',
           ephemeral: true,

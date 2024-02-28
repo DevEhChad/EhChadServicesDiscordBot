@@ -1,4 +1,8 @@
 # Dependencies
 /node_modules
 /.env
+/.env-official
+/.env-test
 /config.json
+/config-test.json
+/config-official.json
