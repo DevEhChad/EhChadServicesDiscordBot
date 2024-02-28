@@ -62,6 +62,7 @@ const {
       }
     },
   
+    deleted: true,
     name: 'kick',
     description: 'Kicks a member from this server.',
     options: [

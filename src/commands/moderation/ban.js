@@ -61,7 +61,7 @@ const {
         console.log(`There was an error when banning: ${error}`);
       }
     },
-    
+    deleted: true,
     name: 'ban',
     description: 'Bans a member from this server.',
     options: [
