@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const welcomeChannelSchema = require('../../schemas/WelcomeChannel');
+const leaveChannelSchema = require('../../schemas/LeaveChannel');
 
 module.exports = {
 
@@ -22,23 +22,23 @@ module.exports = {
             channelId: targetChannel.id,
         };
 
-        const channelExistInDb = await welcomeChannelSchema.exists(query);
+        const channelExistInDb = await leaveChannelSchema.exists(query);
 
         if (channelExistInDb) {
-           interaction.followUp('This channel has already been configured for welcome messages.');
+           interaction.followUp('This channel has already been configured for leave messages.');
            return;
         }
 
-        const newWelcomeChannel = new welcomeChannelSchema({
+        const newLeaveChannel = new leaveChannelSchema({
             ...query,
             customMessage,
         });
 
-        newWelcomeChannel
+        newLeaveChannel
         .save()
         .then(() => {
             interaction.followUp(
-                `Configured ${targetChannel} to receive welcome messages.`
+                `Configured ${targetChannel} to receive leave messages.`
             );
         })
         .catch(() => {
@@ -54,18 +54,18 @@ module.exports = {
     },
 
             //deleted: true,
-            name: 'setup-welcome-channel',
-            description: 'Setup a channel to send the welcome messages to.',
+            name: 'setup-leave-channel',
+            description: 'Setup a channel to send the leave messages to.',
             options: [
                 {
                 name: 'target-channel',
-                description: 'The channel to get welcome messages in.',
+                description: 'The channel to get leave messages in.',
                 type: ApplicationCommandOptionType.Channel,
                 required: true
                 },
                 {
                 name: 'custom-message',
-                description: 'TEMPLATES:{mention-member} {username} {server-name} {user-tag} <@{user-tag}>, "The Welcome Message"',
+                description: 'TEMPLATES:{mention-member} {username} {server-name} {user-tag} <@{user-tag}>, "The leave Message"',
                 type: ApplicationCommandOptionType.String,
                 },
             ],

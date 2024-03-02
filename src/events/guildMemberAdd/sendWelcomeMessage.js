@@ -26,6 +26,8 @@ module.exports = async (client, guildMember) => {
             .replace('{mention-member}', `<@${guildMember.id}>`)
             .replace('{username}', guildMember.user.username)
             .replace('{server-name}', guildMember.guild.name)
+            .replace('{user-tag}', guildMember.user.id)
+            .replace('<@{user-tag}>', `<@${guildMember.user.id}>`)
 
         targetChannel.send(welcomeMessage).catch(() => {});
         console.log(`${guildMember.user.tag} has joined ${guildMember.guild.name}`);

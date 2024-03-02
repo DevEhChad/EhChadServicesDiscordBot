@@ -1,7 +1,17 @@
 require("dotenv").config();
-const { REST, Routes, Client, IntentsBitField } = require('discord.js');
 const mongoose = require('mongoose');
 const eventHandler = require('./handlers/eventHandler');
+
+const {
+    REST,
+    Routes,
+    Client,
+    IntentsBitField,
+    ButtonBuilder,
+    ButtonStyle,
+    ActionRowBuilder,
+    ComponentType,
+} = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -15,7 +25,7 @@ const client = new Client({
         IntentsBitField.Flags.DirectMessages,
         IntentsBitField.Flags.GuildEmojisAndStickers,
         IntentsBitField.Flags.GuildVoiceStates,
-        IntentsBitField.Flags.GuildWebhooks
+        IntentsBitField.Flags.GuildWebhooks,
     ],
 });
 
