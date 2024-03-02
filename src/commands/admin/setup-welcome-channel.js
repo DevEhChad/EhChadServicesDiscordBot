@@ -53,7 +53,7 @@ module.exports = {
         return;
     },
 
-            deleted: true,
+            //deleted: true,
             name: 'setup-welcome-channel',
             description: 'Setup a channel to send the welcome messages to.',
             options: [

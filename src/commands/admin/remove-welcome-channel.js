@@ -7,8 +7,6 @@ module.exports = {
       * 
       * @param {Client} client
       * @param {Interaction} interaction
-      * @param {data} data
-      * @param {run} run
     */
     
     callback: async ( client, interaction, ) => {
@@ -44,7 +42,7 @@ module.exports = {
         return; 
     },
 
-            deleted: true,
+            //deleted: true,
             name: 'remove-welcome-channel',
             description: 'removes a welcome channel from sending welcome messages.',
             options: [
