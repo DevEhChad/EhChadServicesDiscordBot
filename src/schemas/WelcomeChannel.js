@@ -5,8 +5,7 @@ const welcomeChannelSchema = new Schema(
     guildId: {
         type: String,
         required: true,
-        //unique: true, //Makes it only unique to one welcome channel to each server.
-    },
+    },   
     channelId: {
         type: String,
         required: true,
