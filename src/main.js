@@ -13,6 +13,7 @@ const {
     ComponentType,
 } = require('discord.js');
 
+//client
 const client = new Client({
     intents: [
         IntentsBitField.Flags.Guilds,
