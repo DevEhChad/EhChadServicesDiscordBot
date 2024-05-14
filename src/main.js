@@ -34,7 +34,7 @@ const client = new Client({
     try {
     mongoose.set('strictQuery', false);
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Conneted to EhChadServices DB. ✅');
+    console.log('✅ Successfully Connected to EhChadServices DB. ✅');
 
     eventHandler(client);
 

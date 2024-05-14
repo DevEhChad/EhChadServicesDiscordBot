@@ -1,6 +1,6 @@
 {
   "name": "ehchadservicesbot",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "EhChads Latest up to date discord bot.",
   "main": "src/main.js",
   "scripts": {
@@ -18,7 +18,7 @@
   "homepage": "https://github.com/DevEhChad/EhChadServicesDiscordBot#readme",
   "dependencies": {
     "canvacord": "^5.4.10",
-    "discord.js": "^14.12.1",
+    "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
     "mongoose": "^8.2.0",
     "ms": "^2.1.3",
