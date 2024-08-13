@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const welcomeChannelSchema = require('../../schemas/WelcomeChannel');
+const NowLiveSchema = require('../../schemas/NowLiveChannel');
 
 module.exports = {
 
@@ -22,23 +22,23 @@ module.exports = {
             channelId: targetChannel.id,
         };
 
-        const channelExistInDb = await welcomeChannelSchema.exists(query);
+        const channelExistInDb = await NowLiveSchema.exists(query);
 
         if (channelExistInDb) {
-           interaction.followUp('This channel has already been configured for welcome messages.');
+           interaction.followUp('This channel has already been configured for live messages.');
            return;
         }
 
-        const newWelcomeChannel = new welcomeChannelSchema({
+        const newNowLiveChannel = new NowLiveSchema({
             ...query,
             customMessage,
         });
 
-        newWelcomeChannel
+        newNowLiveChannel
         .save()
         .then(() => {
             interaction.followUp(
-                `Configured ${targetChannel} to receive welcome messages.`
+                `Configured ${targetChannel} to receive live messages.`
             );
         })
         .catch((error) => {
@@ -54,19 +54,14 @@ module.exports = {
     },
 
             //deleted: true,
-            name: 'setup-welcome-channel',
-            description: 'Setup a channel to send the welcome messages to.',
+            name: 'setup-live-channel',
+            description: 'Setup a channel to send the live messages to.',
             options: [
                 {
                 name: 'target-channel',
-                description: 'The channel to get welcome messages in.',
+                description: 'The channel to get live messages in.',
                 type: ApplicationCommandOptionType.Channel,
                 required: true
-                },
-                {
-                name: 'custom-message',
-                description: 'TEMPLATES:{mention-member} {username} {server-name} {user-tag} <@{user-tag}>, "The Welcome Message"',
-                type: ApplicationCommandOptionType.String,
                 },
             ],
             permissionsRequired: [PermissionFlagsBits.Administrator],

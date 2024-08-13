@@ -15,12 +15,8 @@ const NowLiveSchema = new Schema(
         type: String,
         default: null,
     },
-    twitchUser: {
-        type: String,
-        required: true,
-    },
 }, 
 { timestamps: true}
 );
 
-module.exports = model('NowLiveSchema', NowLiveSchema);
+module.exports = model('NowLiveChannel', NowLiveSchema);
