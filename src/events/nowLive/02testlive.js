@@ -6,26 +6,15 @@ require("dotenv").config();
 const twitchClientID = process.env.TWITCH_CLIENT_ID;
 const twitchSecretID = process.env.TWITCH_CLIENT_SECRET;
 
-const client = new Client({
-  intents: [
-      IntentsBitField.Flags.Guilds,
-      IntentsBitField.Flags.GuildMembers,
-      IntentsBitField.Flags.GuildMessages,
-      IntentsBitField.Flags.GuildPresences,
-      IntentsBitField.Flags.GuildModeration,
-      IntentsBitField.Flags.GuildInvites,
-      IntentsBitField.Flags.MessageContent,
-      IntentsBitField.Flags.DirectMessages,
-      IntentsBitField.Flags.GuildEmojisAndStickers,
-      IntentsBitField.Flags.GuildVoiceStates,
-      IntentsBitField.Flags.GuildWebhooks,
-  ],
-});
-
-module.exports = async (client, message) => {
+module.exports = async (client) => {
   try {
-  
-    const twitchUsername = TwitchUserSchema.twitchId;
+
+    
+
+    const query = {
+      guildId: guildId,
+      twitchId: twitchId,
+  };
   
   let twitchAccessToken = null;
   
