@@ -73,6 +73,6 @@ if (NowLiveChannelID) {
         console.log(`Error: ${error}`);
     }
 
-    NowLiveTest();
+    //NowLiveTest();
 
 })();
