@@ -37,9 +37,15 @@ module.exports = {
         newNowLiveChannel
         .save()
         .then(() => {
+            if (customMessage) {
             interaction.followUp(
-                `Configured ${targetChannel} to receive live messages.`
+                `Configured ${targetChannel} to receive live message with a custom message: "**${customMessage}**"`
             );
+        } else {
+            interaction.followUp(
+                `Configured ${targetChannel} to recieve live messages with the default message.`
+            )
+        }
         })
         .catch((error) => {
             interaction.followUp('Database Error. Please try again in a moment.');
@@ -61,7 +67,13 @@ module.exports = {
                 name: 'target-channel',
                 description: 'The channel to get live messages in.',
                 type: ApplicationCommandOptionType.Channel,
-                required: true
+                required: true,
+                },
+                {
+                name: 'custom-message',
+                description: 'A custom notification message.',
+                type: ApplicationCommandOptionType.String,
+                required: false,
                 },
             ],
             permissionsRequired: [PermissionFlagsBits.Administrator],
