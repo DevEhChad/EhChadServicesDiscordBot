@@ -15,7 +15,6 @@ const {
     ComponentType,
 } = require('discord.js');
 
-
 //client
 const client = new Client({
     intents: [
@@ -46,7 +45,4 @@ const client = new Client({
     } catch (error) {
         console.log(`Error: ${error}`);
     }
-    
-    
-
 })();
