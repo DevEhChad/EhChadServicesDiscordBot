@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const eventHandler = require('./handlers/eventHandler');
 const sendNowLiveMessage = require("./events/nowLive/sendNowLiveMessage");
 const axios = require('axios');
+const app = require('express');
 
 const {
     REST,
