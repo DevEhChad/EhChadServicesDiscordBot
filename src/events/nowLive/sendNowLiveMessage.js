@@ -101,8 +101,10 @@ module.exports = async (client) => {
                 .setTitle(streamTitle)
                 .setDescription('🔴 Live now! 🔴')
                 .addFields(
+                  { name: 'Streamer', value: twitchId, inline: true },
                   { name: 'Game', value: gameName, inline: true },
                   { name: 'Viewers', value: viewerCount.toString(), inline: true },
+                  { name: 'Link', value: twitchUrl, inline: false },
                 );
 
               if (thumbnailUrl) {
@@ -110,7 +112,7 @@ module.exports = async (client) => {
               }
 
               // Send custom message above the embed
-              channel.send(nowLiveChannel.customMessage || `@everyone ${twitchId} is now live!`);
+              channel.send(nowLiveChannel.customMessage || `**${twitchId}** is now live!`);
 
               // Send embed with button
               channel.send({ embeds: [embed], components: [row] });
