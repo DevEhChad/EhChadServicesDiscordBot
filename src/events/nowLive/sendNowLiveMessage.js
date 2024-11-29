@@ -1,4 +1,4 @@
-const { Client, GuildMember, IntentsBitField } = require('discord.js');
+const { Client, GuildMember, IntentsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ButtonComponent } = require('discord.js');
 const TwitchUserSchema = require("../../schemas/TwitchUser");
 const NowLiveSchema = require("../../schemas/NowLiveChannel");
 const axios = require("axios");
@@ -9,9 +9,8 @@ const twitchSecretID = process.env.TWITCH_CLIENT_SECRET;
 module.exports = async (client) => {
   try {
     let twitchAccessToken = null;
-    const notifiedMap = new Map(); // Track notified status per user for the current stream session
+    const notifiedMap = new Map();
 
-    // Function to get Twitch Access Token
     async function getTwitchAccessToken() {
       const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
         params: {
@@ -23,7 +22,15 @@ module.exports = async (client) => {
       twitchAccessToken = response.data.access_token;
     }
 
-    // Function to check if the stream is live for a specific Twitch user
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
     async function isStreamLive(twitchUsername) {
       if (!twitchAccessToken) await getTwitchAccessToken();
 
@@ -40,50 +47,85 @@ module.exports = async (client) => {
       return response.data.data.length > 0;
     }
 
-    // Function to check all Twitch users in the guild and notify if live
+    async function getStreamData(twitchUsername) {
+      if (!twitchAccessToken) await getTwitchAccessToken();
+
+      const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
+        params: {
+          user_login: twitchUsername,
+        },
+        headers: {
+          'Client-ID': twitchClientID,
+          'Authorization': `Bearer ${twitchAccessToken}`,
+        },
+      });
+
+      return response.data.data[0]; // Return the stream data directly
+    }
+
     async function checkStreamsAndNotify() {
-      // Query all NowLiveSchema entries for live notification channels in the guild
       const nowLiveChannels = await NowLiveSchema.find();
       if (!nowLiveChannels || nowLiveChannels.length === 0) {
         return;
       }
 
-      // Query all Twitch users associated with the guild
       const twitchUsers = await TwitchUserSchema.find();
 
       for (const user of twitchUsers) {
-        const { twitchId } = user; // Using `twitchId` as the username here
+        const { twitchId } = user;
         const isLive = await isStreamLive(twitchId);
 
-        // Notify only if the user is live and a notification hasn't been sent yet
         if (isLive && !notifiedMap.get(twitchId)) {
-          // Send a notification to each NowLiveChannel entry
           for (const nowLiveChannel of nowLiveChannels) {
             const channel = await client.channels.fetch(nowLiveChannel.channelId);
             if (channel) {
-              // Use customMessage if available, otherwise use the default message
-              const message = nowLiveChannel.customMessage
-                ? `${nowLiveChannel.customMessage} | **${twitchId}**: https://www.twitch.tv/${twitchId}`
-                :  `**${twitchId}** is now live on Twitch! Check the stream out at https://www.twitch.tv/${twitchId}`;
+              // Fetch stream data for title and URL
+              const streamData = await getStreamData(twitchId);
+              const streamTitle = streamData?.title || `${twitchId}'s Stream`;
+              const twitchUrl = `https://www.twitch.tv/${twitchId}`;
+              const gameName = streamData?.game_name || "Unknown Game";
+              const viewerCount = streamData?.viewer_count || 0;
+              const thumbnailUrl = streamData?.thumbnail_url || null;
 
-              channel.send(message);
+              // Create button
+              const row = new ActionRowBuilder()
+                .addComponents(
+                  new ButtonBuilder()
+                    .setLabel('Watch Stream')
+                    .setURL(twitchUrl)
+                    .setStyle(ButtonStyle.Link)
+                );
+
+              const embed = new EmbedBuilder()
+                .setColor(getRandomColor())
+                .setTitle(streamTitle)
+                .setDescription('🔴 Live now! 🔴')
+                .addFields(
+                  { name: 'Game', value: gameName, inline: true },
+                  { name: 'Viewers', value: viewerCount.toString(), inline: true },
+                );
+
+              if (thumbnailUrl) {
+                embed.setImage(thumbnailUrl.replace('{width}', '1280').replace('{height}', '720'));
+              }
+
+              // Send custom message above the embed
+              channel.send(nowLiveChannel.customMessage || `@everyone ${twitchId} is now live!`);
+
+              // Send embed with button
+              channel.send({ embeds: [embed], components: [row] });
             }
           }
-          // Mark this user as notified
           notifiedMap.set(twitchId, true);
-        } 
-        // Reset notification status if user is offline
-        else if (!isLive) {
+        } else if (!isLive) {
           notifiedMap.set(twitchId, false);
         }
       }
     }
 
-    // Initial check when bot starts
     await checkStreamsAndNotify();
 
-    // Set an interval to check all streams every 5 minutes
-    setInterval(checkStreamsAndNotify, 1 * 60 * 1000); // 5 minutes = 5 * 60 * 1000 ms
+    setInterval(checkStreamsAndNotify, 1 * 60 * 1000);
   } catch (error) {
     console.log(`Error: `, error);
   }
