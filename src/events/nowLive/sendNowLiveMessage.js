@@ -1,4 +1,4 @@
-const { Client, GuildMember, IntentsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ButtonComponent } = require('discord.js');
+const { Client, GuildMember, IntentsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ButtonComponent, channelLink } = require('discord.js');
 const TwitchUserSchema = require("../../schemas/TwitchUser");
 const NowLiveSchema = require("../../schemas/NowLiveChannel");
 const axios = require("axios");
@@ -99,6 +99,7 @@ module.exports = async (client) => {
               const embed = new EmbedBuilder()
                 .setColor(getRandomColor())
                 .setTitle(streamTitle)
+                .setURL(twitchUrl)
                 .setDescription('🔴 Live now! 🔴')
                 .addFields(
                   { name: 'Streamer', value: twitchId, inline: true },
