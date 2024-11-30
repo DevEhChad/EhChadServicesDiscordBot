@@ -62,6 +62,6 @@ module.exports = {
                 }
             ],
             permissionsRequired: [PermissionFlagsBits.Administrator],
-            botPermissions: [PermissionFlagsBits.ManageChannels],
+            botPermissions: [PermissionFlagsBits.ManageRoles],
 
 };

@@ -69,7 +69,7 @@ module.exports = {
                 type: ApplicationCommandOptionType.String,
                 },
             ],
-            permissionsRequired: [PermissionFlagsBits.Administrator],
+            permissionsRequired: [PermissionFlagsBits.ManageChannels],
             botPermissions: [PermissionFlagsBits.ManageChannels],
 
 };

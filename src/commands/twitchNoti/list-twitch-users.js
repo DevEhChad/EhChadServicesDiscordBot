@@ -28,6 +28,6 @@ module.exports = {
     name: 'list-twitch-users',
     description: 'Lists all Twitch users added in live notifications in the server',
     options: [],
-    permissionsRequired: [PermissionFlagsBits.Administrator],
+    permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],
 };

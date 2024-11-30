@@ -31,7 +31,7 @@ return;
 },
 
     //deleted: true,
-    devOnly: true,
+    //devOnly: true,
     name: 'simulate-leave',
     description: 'Simulates a member leaving.',
     options: [

@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const leaveChannelSchema = require('../../schemas/LeaveChannel');
+const welcomeChannelSchema = require('../../schemas/WelcomeChannel');
 
 module.exports = {
 
@@ -20,16 +20,16 @@ module.exports = {
             channelId: targetChannel.id,
         };
    
-        const channelExistInDb = await leaveChannelSchema.exists(query);
+        const channelExistInDb = await welcomeChannelSchema.exists(query);
 
         if(!channelExistInDb) {
-            interaction.followUp('That channel has not been configured for leave messages.');
+            interaction.followUp('That channel has not been configured for welcome messages.');
             return;
         }
 
-        leaveChannelSchema.findOneAndDelete(query)
+        welcomeChannelSchema.findOneAndDelete(query)
         .then(() => {
-            interaction.followUp(`Removed ${targetChannel} from receiving leave messages.`);
+            interaction.followUp(`Removed ${targetChannel} from receiving welcome messages.`);
         })
         .catch((error) => {
             interaction.followUp('Database error. Please try again in a moment.');
@@ -43,17 +43,17 @@ module.exports = {
     },
 
             //deleted: true,
-            name: 'remove-leave-channel',
-            description: 'removes a leave channel from sending leave messages.',
+            name: 'remove-welcome-channel',
+            description: 'removes a welcome channel from sending welcome messages.',
             options: [
                 {
                 name: 'target-channel',
-                description: 'The channel to remove leave messages in.',
+                description: 'The channel to get remove welcome messages in.',
                 type: ApplicationCommandOptionType.Channel,
                 required: true,
                 },
             ],
-            permissionsRequired: [PermissionFlagsBits.Administrator],
+            permissionsRequired: [PermissionFlagsBits.ManageChannels],
             botPermissions: [PermissionFlagsBits.ManageChannels],
 
 };

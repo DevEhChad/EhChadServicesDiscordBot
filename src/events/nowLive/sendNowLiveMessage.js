@@ -84,6 +84,7 @@ module.exports = async (client) => {
               const streamTitle = streamData?.title || `${twitchId}'s Stream`;
               const twitchUrl = `https://www.twitch.tv/${twitchId}`;
               const gameName = streamData?.game_name || "Unknown Game";
+              const startedAt = streamData?.started_at;
               const viewerCount = streamData?.viewer_count || 0;
               const thumbnailUrl = streamData?.thumbnail_url || null;
 
@@ -102,11 +103,11 @@ module.exports = async (client) => {
                 .setURL(twitchUrl)
                 .setDescription('🔴 Live now! 🔴')
                 .addFields(
-                  { name: 'Streamer', value: twitchId, inline: true },
+                  { name: 'Streamer', value: twitchId, inline: false },
                   { name: 'Game', value: gameName, inline: true },
                   { name: 'Viewers', value: viewerCount.toString(), inline: true },
-                  { name: 'Link', value: twitchUrl, inline: false },
-                );
+                  { name: 'Twitch Link', value: twitchUrl, inline: false },)
+                .setFooter({ text: `ehchadservices.com • Stream Started at: ${new Date(startedAt).toLocaleString()}` });
 
               if (thumbnailUrl) {
                 embed.setImage(thumbnailUrl.replace('{width}', '1280').replace('{height}', '720'));
@@ -128,7 +129,7 @@ module.exports = async (client) => {
 
     await checkStreamsAndNotify();
 
-    setInterval(checkStreamsAndNotify, 1 * 60 * 1000);
+    setInterval(checkStreamsAndNotify, 5000); //sets from seconds. 5 * 60 * 1000 is for minutes
   } catch (error) {
     console.log(`Error: `, error);
   }
