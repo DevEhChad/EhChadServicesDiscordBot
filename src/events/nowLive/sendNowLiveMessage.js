@@ -32,35 +32,44 @@ module.exports = async (client) => {
     }
 
     async function isStreamLive(twitchUsername) {
-      if (!twitchAccessToken) await getTwitchAccessToken();
+      try {
 
-      const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
-        params: {
-          user_login: twitchUsername,
-        },
-        headers: {
-          'Client-ID': twitchClientID,
-          'Authorization': `Bearer ${twitchAccessToken}`,
-        },
-      });
+        if (!twitchAccessToken) await getTwitchAccessToken();
 
-      return response.data.data.length > 0;
+        const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
+          params: {
+            user_login: twitchUsername,
+          },
+          headers: {
+            'Client-ID': twitchClientID,
+            'Authorization': `Bearer ${twitchAccessToken}`,
+          },
+        });
+
+        return response.data.data.length > 0;
+      } catch (error) {
+        console.log(`Error: `, error);
+      }
     }
 
     async function getStreamData(twitchUsername) {
-      if (!twitchAccessToken) await getTwitchAccessToken();
+      try {
+        if (!twitchAccessToken) await getTwitchAccessToken();
 
-      const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
-        params: {
-          user_login: twitchUsername,
-        },
-        headers: {
-          'Client-ID': twitchClientID,
-          'Authorization': `Bearer ${twitchAccessToken}`,
-        },
-      });
+        const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
+          params: {
+            user_login: twitchUsername,
+          },
+          headers: {
+            'Client-ID': twitchClientID,
+            'Authorization': `Bearer ${twitchAccessToken}`,
+          },
+        });
 
-      return response.data.data[0]; // Return the stream data directly
+        return response.data.data[0]; // Return the stream data directly
+      } catch (error) {
+        console.log(`Error: `, error)
+      }
     }
 
     async function checkStreamsAndNotify() {

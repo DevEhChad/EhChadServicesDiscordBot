@@ -19,7 +19,7 @@ module.exports = {
       await AutoRole.findOneAndDelete({ guildId: interaction.guild.id });
       interaction.editReply('Auto role has been disabled for this server. Use `/autorole-configure` to set it up again.');
     } catch (error) {
-      console.log(error);
+      console.log(`Error: `, error);
     }
   },
   name: 'autorole-disable',

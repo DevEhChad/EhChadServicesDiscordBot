@@ -9,6 +9,7 @@ const {
     REST,
     Routes,
     Client,
+    Intents,
     IntentsBitField,
     ButtonBuilder,
     ButtonStyle,
@@ -35,14 +36,17 @@ const client = new Client({
 
 (async () => {
     try {
-    mongoose.set('strictQuery', false);
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Successfully Connected to EhChadServices DB. ✅');
-    
-    eventHandler(client);
-    sendNowLiveMessage(client);
 
-    client.login(process.env.TOKEN);
+        mongoose.set('strictQuery', false);
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('✅ Successfully Connected to EhChadServices DB. ✅');
+
+        eventHandler(client);
+
+        client.login(process.env.TOKEN);
+
+        sendNowLiveMessage(client);
+
     } catch (error) {
         console.log(`Error: ${error}`);
     }

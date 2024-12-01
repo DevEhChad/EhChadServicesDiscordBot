@@ -2,8 +2,13 @@ const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits }
 
 module.exports = {
     callback: async (client, interaction) => {
+        try {
 
-},
+        } catch (error) {
+
+        }
+
+    },
     deleted: true,
     devOnly: true,
     name: 'add-queue',
@@ -12,11 +17,11 @@ module.exports = {
         {
             //deleted: true,
             name: 'song-url',
-            type: ApplicationCommandOptionType.String, 
+            type: ApplicationCommandOptionType.String,
             required: true,
             description: 'The song url'
         }
     ],
     permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.ManageMessages], 
+    botPermissions: [PermissionFlagsBits.ManageMessages],
 };

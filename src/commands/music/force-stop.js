@@ -1,6 +1,11 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
 module.exports = {
     callback: async (client, interaction) => {
+        try {
+
+        } catch (error) {
+
+        }
 
     },
     deleted: true,
@@ -8,5 +13,5 @@ module.exports = {
     name: 'force-stop',
     description: 'Completely stop the queue and leaves voice channel.',
     permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.ManageMessages], 
+    botPermissions: [PermissionFlagsBits.ManageMessages],
 };

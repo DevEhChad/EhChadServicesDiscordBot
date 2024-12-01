@@ -2,12 +2,17 @@ const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits }
 
 module.exports = {
     callback: async (client, interaction) => {
+        try {
 
-},
+        } catch (error) {
+
+        }
+
+    },
     deleted: true,
     devOnly: true,
     name: 'play',
     description: 'Joins channel plays current song will add new songs to queue. ',
     permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.ManageMessages], 
+    botPermissions: [PermissionFlagsBits.ManageMessages],
 };

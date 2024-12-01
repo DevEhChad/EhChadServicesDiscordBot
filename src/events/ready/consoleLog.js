@@ -16,6 +16,11 @@ let status = [
         type: ActivityType.Streaming,
         url: 'https://twitch.tv/ehchad'
     },
+    {
+        name: '/help',
+        type: ActivityType.Streaming,
+        url: 'https://twitch.tv/ehchad'
+    },
 ]
 
 
