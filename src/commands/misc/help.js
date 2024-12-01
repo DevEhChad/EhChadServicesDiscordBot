@@ -28,7 +28,7 @@ module.exports = {
         await interaction.reply({ embeds: [embed] });
     },
 
-    //deleted: true,
+    deleted: true,
     name: 'help',
     description: 'Provides a list of all commands and their descriptions.',
 };
