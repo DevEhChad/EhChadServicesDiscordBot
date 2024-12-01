@@ -1,7 +1,7 @@
 const { Client, SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
-
+const invite = require('./invite');
 
 /**
  * @param {Client} client
@@ -9,9 +9,10 @@ const path = require('node:path');
  */
 
 module.exports = {
+
     callback: async (client, interaction) => {
         const commandsPath = path.join(__dirname, "../", "../", "commands/"); // Path to your commands directory
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        const commandFiles = getAllCommandFiles(commandsPath);
 
         const embed = new EmbedBuilder()
             .setColor(0x0099FF)
@@ -31,3 +32,21 @@ module.exports = {
     name: 'help',
     description: 'Provides a list of all commands and their descriptions.',
 };
+
+function getAllCommandFiles(dirPath, arrayOfFiles) {
+    files = fs.readdirSync(dirPath);
+
+    arrayOfFiles = arrayOfFiles || [];
+
+    files.forEach(function (file) {
+        if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+            arrayOfFiles = getAllCommandFiles(dirPath + "/" + file, arrayOfFiles);
+        } else {
+            if (file.endsWith('.js')) {
+                arrayOfFiles.push(path.join(dirPath, "/", file));
+            }
+        }
+    });
+
+    return arrayOfFiles;
+}

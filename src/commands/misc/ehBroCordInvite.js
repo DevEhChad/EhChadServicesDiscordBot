@@ -1,7 +1,9 @@
 const {
-    Client,
-    Interaction,
-  } = require('discord.js');
+  Client,
+  Interaction,
+  Embed,
+  EmbedBuilder,
+} = require('discord.js');
 
 /**
  * @param {Client} client
@@ -9,20 +11,26 @@ const {
  */
 
 module.exports = {
-  
-    callback: async (client, interaction) => {
-      try {
-        const invite = "https://discord.gg/EAqNqWjJMQ";
 
-        await interaction.reply(invite);
-        
-      } catch (error) {
-        console.log('error', error);
-      } return;
-    },
+  callback: async (client, interaction, message) => {
+    try {
+      const invite = "https://discord.gg/EAqNqWjJMQ";
 
-    //deleted: true,
-    //devOnly: true,
-    name: 'ehbrocord-invite',
-    description: 'Will send Eh BroCords discords perma invite link.',
-  };
+      const embed = new EmbedBuilder()
+        .setColor(0xFF0000)
+        .setTitle("Click to join!")
+        .setDescription(`Link: ${invite}`)
+        .setURL(invite);
+
+      await interaction.reply({ embeds: [embed], content: invite });
+
+    } catch (error) {
+      console.log('error', error);
+    } return;
+  },
+
+  //deleted: true,
+  //devOnly: true,
+  name: 'ehbrocord-invite',
+  description: 'Will send Eh BroCords discords perma invite link.',
+};
