@@ -10,7 +10,7 @@ const path = require('node:path');
 
 module.exports = {
     callback: async (client, interaction) => {
-        const commandsPath = path.join(__dirname, "..", "..", "commands"); // Path to your commands directory
+        const commandsPath = path.join(__dirname, "../", "../", "commands/"); // Path to your commands directory
         const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
         const embed = new EmbedBuilder()
