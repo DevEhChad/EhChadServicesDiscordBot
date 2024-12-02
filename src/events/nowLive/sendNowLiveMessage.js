@@ -138,7 +138,7 @@ module.exports = async (client) => {
 
     await checkStreamsAndNotify();
 
-    setInterval(checkStreamsAndNotify, 5000); //sets from seconds. 5 * 60 * 1000 is for minutes
+    setInterval(checkStreamsAndNotify, 3 * 60 * 1000); //sets from seconds. 5 * 60 * 1000 is for minutes
   } catch (error) {
     console.log(`Error: `, error);
   }
