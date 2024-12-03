@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const TwitchUserSchema = require('../../schemas/TwitchUser');
+const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
 
@@ -11,23 +11,23 @@ module.exports = {
 
     callback: async (client, interaction,) => {
         try {
-            const TwitchUser = interaction.options.getString('twitch-user');
+            const YouTubeUser = interaction.options.getString('youtube-user');
 
             await interaction.deferReply({ ephmeral: true });
 
             const query = {
                 guildId: interaction.guildId,
-                twitchId: TwitchUser,
+                youTubeId: YouTubeUser,
             };
 
-            const TwitchUserExistInDb = await TwitchUserSchema.exists(query);
+            const YouTubeUserExistInDb = await YouTubeUserSchema.exists(query);
 
-            if (TwitchUserExistInDb) {
+            if (YouTubeUserExistInDb) {
                 interaction.followUp('This user has already been added to the live list for this server.');
                 return;
             }
 
-            const twitchUser = new TwitchUserSchema({
+            const youTubeUser = new YouTubeUserSchema({
                 ...query,
             });
 

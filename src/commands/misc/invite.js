@@ -61,7 +61,7 @@ module.exports = {
 
     //deleted: true,
     name: 'invite',
-    description: 'Will send a custimizable discord invite to your server.',
+    description: 'Will create a custimizable discord invite to your server.',
     options: [
         {
             name: 'duration',

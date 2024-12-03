@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const YouTubeChannelSchema = require('../../schemas/NowLiveChannel');
+const YouTubeChannelSchema = require('../../schemas/YouTubeChannel');
 
 module.exports = {
 
@@ -22,10 +22,10 @@ module.exports = {
                 channelId: targetChannel.id,
             };
 
-            const channelExistInDb = await YouTubeChannelSchema.exists(query);
+            const youTubeChannelExistInDb = await YouTubeChannelSchema.exists(query);
 
-            if (channelExistInDb) {
-                interaction.followUp('This channel has already been configured for live messages.');
+            if (youTubeChannelExistInDb) {
+                interaction.followUp('This channel has already been configured for youtube upload messages.');
                 return;
             }
 
@@ -39,11 +39,11 @@ module.exports = {
                 .then(() => {
                     if (customMessage) {
                         interaction.followUp(
-                            `Configured ${targetChannel} to receive live message with a custom message: "**${customMessage}**"`
+                            `Configured ${targetChannel} to receive YouTube upload message with a custom message: "**${customMessage}**"`
                         );
                     } else {
                         interaction.followUp(
-                            `Configured ${targetChannel} to recieve live messages with the default message.`
+                            `Configured ${targetChannel} to recieve YouTube upload messages with the default message.`
                         )
                     }
                 })
@@ -59,7 +59,7 @@ module.exports = {
         return;
     },
 
-    deleted: true,
+    //deleted: true,
     name: 'setup-youtube-channel',
     description: 'Sets up a YouTube Upload noti channel',
     options: [
