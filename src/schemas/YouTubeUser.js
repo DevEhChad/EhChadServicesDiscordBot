@@ -7,12 +7,18 @@ const YouTubeUserSchema = new Schema(
             required: true,
             default: null,
         },
-        youtubeId: {
+        youTubeId: {
             type: String,
             required: true,
             unique: true,
             default: null,
         },
+        youTubeLink: {
+            type: String,
+            required: true,
+            unique: true,
+            default: null,
+        }
     },
     { timestamps: true }
 );

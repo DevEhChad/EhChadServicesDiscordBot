@@ -20,13 +20,13 @@ module.exports = {
 
         // Collect all URLs with usernames and join them with newlines
         const twitchInfo = twitchUsers.map(user => `\`${user.twitchId} :\` <https://www.twitch.tv/${user.twitchId}>`).join('\n\n');
-        
+
         await interaction.reply(`**All Twitch Users Added In This Server:**\n\n${twitchInfo}`);
     },
-    
+
     //deleted: true
     name: 'list-twitch-users',
-    description: 'Lists all Twitch users added in live notifications in the server',
+    description: 'Lists all Twitch user\'s added for notify in the server.',
     options: [],
     permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],

@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const TwitchUserSchema = require('../../schemas/TwitchUser');
+const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
 
@@ -10,23 +10,24 @@ module.exports = {
     */
 
     callback: async (client, interaction) => {
-        // Query all Twitch users associated with the guild
-        const twitchUsers = await TwitchUserSchema.find();
+        // Query all YouTube users associated with the guild
+        const youTubeUsers = await YouTubeUserSchema.find();
 
-        if (twitchUsers.length === 0) {
-            await interaction.reply("No Twitch users found.");
+        if (youTubeUsers.length === 0) {
+            await interaction.reply("No YouTube users found.");
             return;
         }
 
         // Collect all URLs with usernames and join them with newlines
-        const twitchInfo = twitchUsers.map(user => `\`${user.twitchId} :\` <https://www.twitch.tv/${user.twitchId}>`).join('\n\n');
-        
-        await interaction.reply(`**All Twitch Users Added In This Server:**\n\n${twitchInfo}`);
+        const youTubeInfo = youTubeUsers.map(user => `${user.youTubeId}: ${user.youTubeLink}`);
+
+
+        await interaction.reply(`**All YouTube Users Added In This Server:**\n\n${youTubeInfo}`);
     },
-    
+
     //deleted: true
-    name: 'list-twitch-users',
-    description: 'Lists all Twitch users added in live notifications in the server',
+    name: 'list-youtube-users',
+    description: 'Lists all YouTube user\'s added for notify in the server.',
     options: [],
     permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],

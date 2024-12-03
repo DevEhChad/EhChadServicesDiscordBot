@@ -2,23 +2,27 @@ const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits }
 const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
-
     /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
 
     callback: async (client, interaction,) => {
         try {
             const YouTubeUser = interaction.options.getString('youtube-user');
+            const YouTubeLink = interaction.options.getString('youtube-link');
 
             await interaction.deferReply({ ephmeral: true });
 
             const query = {
                 guildId: interaction.guildId,
                 youTubeId: YouTubeUser,
+                youTubeLink: YouTubeLink,
+
             };
+
+            //console.log(query); // Log the query to inspect the data
 
             const YouTubeUserExistInDb = await YouTubeUserSchema.exists(query);
 
@@ -31,11 +35,11 @@ module.exports = {
                 ...query,
             });
 
-            twitchUser
+            youTubeUser
                 .save()
                 .then(() => {
                     interaction.followUp(
-                        `added ${TwitchUser} to the twitch users.`
+                        `added ${YouTubeUser}: ${YouTubeLink} to the YouTube users.`
                     );
                 })
                 .catch((error) => {
@@ -50,17 +54,22 @@ module.exports = {
         return;
     },
     //deleted: true,
-    name: 'add-twitch-user',
-    description: 'Add Twitch User to get live notifications from.',
+    name: 'add-youtube-user',
+    description: 'Add YouTube User for notify',
     options: [
         {
-            name: 'twitch-user',
-            description: 'Add a Twitch User by username. **Not a link**',
+            name: 'youtube-user',
+            description: 'Add a YouTube User by username. **Not a link**',
             type: ApplicationCommandOptionType.String,
-            required: true
-        }
+            required: true,
+        },
+        {
+            name: 'youtube-link',
+            description: "Please provide the channel share link.",
+            type: ApplicationCommandOptionType.String,
+            required: true,
+        },
     ],
     permissionsRequired: [PermissionFlagsBits.Administrator],
     botPermissions: [PermissionFlagsBits.ManageRoles],
-
 };
