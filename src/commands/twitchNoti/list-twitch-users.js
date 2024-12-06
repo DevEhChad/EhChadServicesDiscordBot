@@ -13,15 +13,17 @@ module.exports = {
         // Query all Twitch users associated with the guild
         const twitchUsers = await TwitchUserSchema.find();
 
+        await interaction.deferReply({ ephemeral: true });
+
         if (twitchUsers.length === 0) {
-            await interaction.reply("No Twitch users found.");
+            await interaction.followUp({ content: "No Twitch users found.", ephermal: true });
             return;
         }
 
         // Collect all URLs with usernames and join them with newlines
         const twitchInfo = twitchUsers.map(user => `\`${user.twitchId} :\` <https://www.twitch.tv/${user.twitchId}>`).join('\n\n');
 
-        await interaction.reply(`**All Twitch Users Added In This Server:**\n\n${twitchInfo}`);
+        await interaction.followUp({ content: `**All Twitch Users Added In This Server:**\n\n${twitchInfo}`, ephermal: true });
     },
 
     //deleted: true

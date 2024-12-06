@@ -9,20 +9,20 @@ module.exports = {
    */
   callback: async (client, interaction) => {
     if (!interaction.inGuild()) {
-      interaction.reply('You can only run this command inside a server.');
+      interaction.reply({ content: 'You can only run this command inside a server.', ephemeral: true }); // Ephemeral added
       return;
     }
 
     const targetRoleId = interaction.options.get('role').value;
 
     try {
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: true }); // Ephemeral added
 
       let autoRole = await AutoRole.findOne({ guildId: interaction.guild.id });
 
       if (autoRole) {
         if (autoRole.roleId === targetRoleId) {
-          interaction.editReply('Auto role has already been configured for that role. To disable run `/autorole-disable`');
+          interaction.editReply({ content: 'Auto role has already been configured for that role. To disable run `/autorole-disable`', ephemeral: true }); // Ephemeral added
           return;
         }
 
@@ -35,7 +35,7 @@ module.exports = {
       }
 
       await autoRole.save();
-      interaction.editReply('Autorole has now been configured. To disable run `/autorole-disable`');
+      interaction.editReply({ content: 'Autorole has now been configured. To disable run `/autorole-disable`', ephemeral: true }); // Ephemeral added
     } catch (error) {
       console.log(error);
     }

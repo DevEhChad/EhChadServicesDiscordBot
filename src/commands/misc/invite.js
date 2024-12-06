@@ -51,11 +51,11 @@ module.exports = {
             });
 
             let usesText = maxUses === 0 ? "Infinite" : maxUses;
-            await interaction.reply(`Here's your invite link: ${invite.url} **Duration: ${inviteDuration}, Uses: ${usesText}**`);
+            await interaction.reply({ content: `Here's your invite link: ${invite.url} **Duration: ${inviteDuration}, Uses: ${usesText}**`, ephemeral: true }); // Ephemeral added
 
         } catch (error) {
             console.log('Error creating invite:', error);
-            await interaction.reply('There was an error creating the invite link.');
+            await interaction.reply({ content: 'There was an error creating the invite link.', ephemeral: true }); // Ephemeral added
         }
     },
 

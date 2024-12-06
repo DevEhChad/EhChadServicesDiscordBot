@@ -1,20 +1,19 @@
-const
-    {
-        ApplicationCommandOptionType,
-        Client,
-        Interaction,
-        PermissionFlagsBits
-    } = require('discord.js');
+const {
+    ApplicationCommandOptionType,
+    Client,
+    Interaction,
+    PermissionFlagsBits
+} = require('discord.js');
 
 const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
 
     /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
 
     callback: async (client, interaction,) => {
         try {
@@ -25,22 +24,22 @@ module.exports = {
             const query = {
                 guildId: interaction.guildId,
                 youTubeId: YouTubeUser,
-                youTubeLink: youTubeLink,
+                // youTubeLink: youTubeLink,  // This seems to be unused, consider removing it
             };
 
             const youtubeUserExistInDb = await YouTubeUserSchema.exists(query);
 
             if (!youtubeUserExistInDb) {
-                interaction.followUp(`That user hasn't been added to the YouTube users list.`);
+                interaction.followUp({ content: `That user hasn't been added to the YouTube users list.`, ephemeral: true });
                 return;
             }
 
             YouTubeUserSchema.findOneAndDelete(query)
                 .then(() => {
-                    interaction.followUp(`Removed ${YouTubeUser} from the YouTube Users list.`);
+                    interaction.followUp({ content: `Removed ${YouTubeUser} from the YouTube Users list.`, ephemeral: true });
                 })
                 .catch((error) => {
-                    interaction.followUp('Database error. Please try again in a moment.');
+                    interaction.followUp({ content: 'Database error. Please try again in a moment.', ephemeral: true });
                     console.log(`DB error in ${__filename}:\n`, error);
                 })
             return;

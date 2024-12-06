@@ -22,29 +22,30 @@ module.exports = {
             .setTitle('Available Commands')
             .setDescription('Here\'s a list of all the commands you can use:');
 
-            for (const file of commandFiles) {
-        
-                try {
-                    // Read the file content
-                    const fileContent = fs.readFileSync(file, 'utf-8');
-        
-                    // Extract name and description (adjust regex if needed)
-                    const nameMatch = fileContent.match(/name: '(.+?)'/);
-                    const descriptionMatch = fileContent.match(/description: '(.+?)'/);
-        
-                    const name = nameMatch ? nameMatch[1] : 'Unknown name';
-                    const description = descriptionMatch ? descriptionMatch[1] : 'Unknown description';
-        
-                    embed.addFields({ name: `/${name}`, value: description });
-                } catch (error) {
-                    
-                }
-            }
+        for (const file of commandFiles) {
 
-        await interaction.reply({ embeds: [embed] });
+            try {
+                // Read the file content
+                const fileContent = fs.readFileSync(file, 'utf-8');
+
+                // Extract name and description (adjust regex if needed)
+                const nameMatch = fileContent.match(/name: '(.+?)'/);
+                const descriptionMatch = fileContent.match(/description: '(.+?)'/);
+
+                const name = nameMatch ? nameMatch[1] : 'Unknown name';
+                const description = descriptionMatch ? descriptionMatch[1] : 'Unknown description';
+
+                embed.addFields({ name: `/${name}`, value: description, ephemeral: true });
+
+            } catch (error) {
+
+            }
+        }
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
     },
 
-    
+
 };
 
 function getAllCommandFiles(dirPath, arrayOfFiles) {

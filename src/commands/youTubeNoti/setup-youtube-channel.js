@@ -25,7 +25,7 @@ module.exports = {
             const youTubeChannelExistInDb = await YouTubeChannelSchema.exists(query);
 
             if (youTubeChannelExistInDb) {
-                interaction.followUp('This channel has already been configured for youtube upload messages.');
+                interaction.followUp({ content: 'This channel has already been configured for youtube upload messages.', ephemeral: true });
                 return;
             }
 
@@ -38,17 +38,19 @@ module.exports = {
                 .save()
                 .then(() => {
                     if (customMessage) {
-                        interaction.followUp(
-                            `Configured ${targetChannel} to receive YouTube upload message with a custom message: "**${customMessage}**"`
-                        );
+                        interaction.followUp({
+                            content: `Configured ${targetChannel} to receive YouTube upload message with a custom message: "**${customMessage}**"`,
+                            ephemeral: true
+                        });
                     } else {
-                        interaction.followUp(
-                            `Configured ${targetChannel} to recieve YouTube upload messages with the default message.`
-                        )
+                        interaction.followUp({
+                            content: `Configured ${targetChannel} to recieve YouTube upload messages with the default message.`,
+                            ephemeral: true
+                        })
                     }
                 })
                 .catch((error) => {
-                    interaction.followUp('Database Error. Please try again in a moment.');
+                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true });
                     console.log(`DB error in ${__filename}:\n`, error);
                 });
             return;

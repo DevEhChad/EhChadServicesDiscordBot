@@ -12,7 +12,7 @@ module.exports = {
       return color;
     }
 
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true }); // Ephemeral added here
 
     const reply = await interaction.fetchReply();
 
@@ -23,11 +23,11 @@ module.exports = {
       .setTitle("Pong!")
       .setDescription(`Ping is ${ping}ms | Websocket: ${client.ws.ping}ms`);
 
-    await interaction.editReply(
-      { embeds: [embed] }
+    await interaction.editReply({
+      embeds: [embed],
+      ephemeral: true // Ephemeral added here 
+    });
 
-      //`Pong! Client ${ping}ms | Websocket: ${client.ws.ping}ms`
-    );
     setTimeout(async () => {
       try {
         await interaction.deleteReply();

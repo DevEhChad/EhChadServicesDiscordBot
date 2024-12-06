@@ -9,15 +9,15 @@ module.exports = {
    */
   callback: async (client, interaction) => {
     try {
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: true }); // Ephemeral added here
 
       if (!(await AutoRole.exists({ guildId: interaction.guild.id }))) {
-        interaction.editReply('Auto role has not been configured for this server. Use `/autorole-configure` to set it up.');
+        interaction.editReply({ content: 'Auto role has not been configured for this server. Use `/autorole-configure` to set it up.', ephemeral: true }); // Ephemeral added here
         return;
       }
 
       await AutoRole.findOneAndDelete({ guildId: interaction.guild.id });
-      interaction.editReply('Auto role has been disabled for this server. Use `/autorole-configure` to set it up again.');
+      interaction.editReply({ content: 'Auto role has been disabled for this server. Use `/autorole-configure` to set it up again.', ephemeral: true }); // Ephemeral added here
     } catch (error) {
       console.log(`Error: `, error);
     }

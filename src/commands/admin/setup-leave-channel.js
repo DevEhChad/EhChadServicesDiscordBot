@@ -4,17 +4,17 @@ const leaveChannelSchema = require('../../schemas/LeaveChannel');
 module.exports = {
 
     /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
 
     callback: async (client, interaction,) => {
         try {
             const targetChannel = interaction.options.getChannel('target-channel');
             const customMessage = interaction.options.getString('custom-message');
 
-            await interaction.deferReply({ ephmeral: true });
+            await interaction.deferReply({ ephemeral: true }); // Corrected spelling of 'ephemeral'
 
             const query = {
                 guildId: interaction.guildId,
@@ -24,7 +24,7 @@ module.exports = {
             const channelExistInDb = await leaveChannelSchema.exists(query);
 
             if (channelExistInDb) {
-                interaction.followUp('This channel has already been configured for leave messages.');
+                interaction.followUp({ content: 'This channel has already been configured for leave messages.', ephemeral: true }); // Ephemeral added
                 return;
             }
 
@@ -36,13 +36,11 @@ module.exports = {
             newLeaveChannel
                 .save()
                 .then(() => {
-                    interaction.followUp(
-                        `Configured ${targetChannel} to receive leave messages.`
-                    );
+                    interaction.followUp({ content: `Configured ${targetChannel} to receive leave messages.`, ephemeral: true }); // Ephemeral added
                 })
-                .catch(() => {
-                    interaction.followUp('Database Error. Please try again in a moment.');
-                    console.log(`DB error in ${__filename}:\n`, erorr);
+                .catch((error) => {
+                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
+                    console.log(`DB error in ${__filename}:\n`, error); // Corrected error variable name
                 });
             return;
 

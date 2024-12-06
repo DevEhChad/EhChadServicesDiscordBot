@@ -13,8 +13,10 @@ module.exports = {
         // Query all YouTube users associated with the guild
         const youTubeUsers = await YouTubeUserSchema.find();
 
+        await interaction.deferReply({ ephemeral: true });
+
         if (youTubeUsers.length === 0) {
-            await interaction.reply("No YouTube users found.");
+            await interaction.followUp("No YouTube users found.");
             return;
         }
 
@@ -22,7 +24,7 @@ module.exports = {
         const youTubeInfo = youTubeUsers.map(user => `${user.youTubeId}: ${user.youTubeLink}`);
 
 
-        await interaction.reply(`**All YouTube Users Added In This Server:**\n\n${youTubeInfo}`);
+        await interaction.followUp({ content: `**All YouTube Users Added In This Server:**\n\n${youTubeInfo}`, ephemeral: true });
     },
 
     //deleted: true

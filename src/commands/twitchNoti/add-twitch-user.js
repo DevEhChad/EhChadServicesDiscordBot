@@ -4,16 +4,16 @@ const TwitchUserSchema = require('../../schemas/TwitchUser');
 module.exports = {
 
     /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
 
     callback: async (client, interaction,) => {
         try {
             const TwitchUser = interaction.options.getString('twitch-user');
 
-            await interaction.deferReply({ ephmeral: true });
+            await interaction.deferReply({ ephemeral: true });  // Corrected spelling of 'ephemeral'
 
             const query = {
                 guildId: interaction.guildId,
@@ -23,7 +23,7 @@ module.exports = {
             const TwitchUserExistInDb = await TwitchUserSchema.exists(query);
 
             if (TwitchUserExistInDb) {
-                interaction.followUp('This user has already been added to the live list for this server.');
+                interaction.followUp({ content: 'This user has already been added to the live list for this server.', ephemeral: true }); // Ephemeral added
                 return;
             }
 
@@ -34,12 +34,10 @@ module.exports = {
             twitchUser
                 .save()
                 .then(() => {
-                    interaction.followUp(
-                        `added ${TwitchUser} to the twitch users.`
-                    );
+                    interaction.followUp({ content: `added ${TwitchUser} to the twitch users.`, ephemeral: true }); // Ephemeral added
                 })
                 .catch((error) => {
-                    interaction.followUp('Database Error. Please try again in a moment.');
+                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
                     console.log(`DB error in ${__filename}:\n`, error);
                 });
             return;

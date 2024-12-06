@@ -4,56 +4,55 @@ const YouTubeChannelSchema = require('../../schemas/YouTubeChannel');
 module.exports = {
 
     /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
-    
-    callback: async ( client, interaction, ) => {
-    try {
-        const targetChannel = interaction.options.getChannel('target-channel');
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
 
-        await interaction.deferReply({ ephemeral: true });
+    callback: async (client, interaction,) => {
+        try {
+            const targetChannel = interaction.options.getChannel('target-channel');
 
-        const query = {
-            guildId: interaction.guildId,
-            channelId: targetChannel.id,
-        };
-   
-        const youTubeChannelExistInDb = await YouTubeChannelSchema.exists(query);
+            await interaction.deferReply({ ephemeral: true });
 
-        if(!youTubeChannelExistInDb) {
-            interaction.followUp('That channel has not been configured for YouTube upload messages.');
+            const query = {
+                guildId: interaction.guildId,
+                channelId: targetChannel.id,
+            };
+
+            const youTubeChannelExistInDb = await YouTubeChannelSchema.exists(query);
+
+            if (!youTubeChannelExistInDb) {
+                interaction.followUp({ content: 'That channel has not been configured for YouTube upload messages.', ephemeral: true });
+                return;
+            }
+
+            YouTubeChannelSchema.findOneAndDelete(query)
+                .then(() => {
+                    interaction.followUp({ content: `Removed ${targetChannel} from receiving YouTube upload messages.`, ephemeral: true });
+                })
+                .catch((error) => {
+                    interaction.followUp({ content: 'Database error. Please try again in a moment.', ephemeral: true });
+                    console.log(`DB error in ${__filename}:\n`, error);
+                })
             return;
-        }
-
-        YouTubeChannelSchema.findOneAndDelete(query)
-        .then(() => {
-            interaction.followUp(`Removed ${targetChannel} from receiving YouTube upload messages.`);
-        })
-        .catch((error) => {
-            interaction.followUp('Database error. Please try again in a moment.');
-            console.log(`DB error in ${__filename}:\n`, error);
-        })
-        return;
-      } catch (error) {
+        } catch (error) {
             console.log(`Error in ${__filename}:\n`, error);
-        }    
-        return; 
+        }
+        return;
     },
-
-            //deleted: true,
-            name: 'remove-youtube-channel',
-            description: 'Removes a YouTube channel from sending upload messages.',
-            options: [
-                {
-                name: 'target-channel',
-                description: 'The channel to remove upload messages in.',
-                type: ApplicationCommandOptionType.Channel,
-                required: true,
-                },
-            ],
-            permissionsRequired: [PermissionFlagsBits.ManageChannels],
-            botPermissions: [PermissionFlagsBits.ManageChannels],
+    //deleted: true,
+    name: 'remove-youtube-channel',
+    description: 'Removes a YouTube channel from sending upload messages.',
+    options: [
+        {
+            name: 'target-channel',
+            description: 'The channel to remove upload messages in.',
+            type: ApplicationCommandOptionType.Channel,
+            required: true,
+        }
+    ],
+    permissionsRequired: [PermissionFlagsBits.ManageChannels],
+    botPermissions: [PermissionFlagsBits.ManageChannels],
 
 };

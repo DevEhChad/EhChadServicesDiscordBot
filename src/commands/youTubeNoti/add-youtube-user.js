@@ -27,7 +27,7 @@ module.exports = {
             const YouTubeUserExistInDb = await YouTubeUserSchema.exists(query);
 
             if (YouTubeUserExistInDb) {
-                interaction.followUp('This user has already been added to the live list for this server.');
+                interaction.followUp({ content: 'This user has already been added to the live list for this server.', ephemeral: true });
                 return;
             }
 
@@ -38,12 +38,10 @@ module.exports = {
             youTubeUser
                 .save()
                 .then(() => {
-                    interaction.followUp(
-                        `added ${YouTubeUser}: ${YouTubeLink} to the YouTube users.`
-                    );
+                    interaction.followUp({ content: `added ${YouTubeUser}: ${YouTubeLink} to the YouTube users.`, ephemeral: true });
                 })
                 .catch((error) => {
-                    interaction.followUp('Database Error. Please try again in a moment.');
+                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true });
                     console.log(`DB error in ${__filename}:\n`, error);
                 });
             return;

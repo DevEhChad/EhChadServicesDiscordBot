@@ -22,7 +22,7 @@ module.exports = {
         .setDescription(`Link: ${invite}`)
         .setURL(invite);
 
-      await interaction.reply({ embeds: [embed], content: invite });
+      await interaction.reply({ embeds: [embed], content: invite, epheremal: true });
 
     } catch (error) {
       console.log('error', error);
