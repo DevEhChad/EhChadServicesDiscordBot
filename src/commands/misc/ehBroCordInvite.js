@@ -1,7 +1,6 @@
 const {
   Client,
   Interaction,
-  Embed,
   EmbedBuilder,
 } = require('discord.js');
 
@@ -12,8 +11,9 @@ const {
 
 module.exports = {
 
-  callback: async (client, interaction, message) => {
+  callback: async (client, interaction) => {
     try {
+
       const invite = "https://discord.gg/EAqNqWjJMQ";
 
       const embed = new EmbedBuilder()
@@ -22,10 +22,16 @@ module.exports = {
         .setDescription(`Link: ${invite}`)
         .setURL(invite);
 
-      await interaction.reply({ embeds: [embed], content: invite, epheremal: true });
+      await interaction.user.send({ embeds: [embed], content: invite });
+      await interaction.reply({ content: "Check your DMs!", ephemeral: true });
 
     } catch (error) {
       console.log('error', error);
+      if (error.code === 50007) {
+        await interaction.reply({ content: "I can't DM you. Please enable DMs from server members.", ephemeral: true });
+      } else {
+        await interaction.reply({ content: "Something went wrong.", ephemeral: true });
+      }
     } return;
   },
 
