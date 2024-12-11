@@ -17,6 +17,8 @@ const levelSchema = new Schema({
         type: Number,
         default: 1,
     }
-});
+},
+{ timestamps: true }
+);
 
 module.exports = model('Level', levelSchema);

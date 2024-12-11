@@ -45,7 +45,6 @@ module.exports = {
         await interaction.reply({ embeds: [embed], ephemeral: true });
     },
 
-
 };
 
 function getAllCommandFiles(dirPath, arrayOfFiles) {

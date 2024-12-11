@@ -15,8 +15,8 @@ const leaveChannelSchema = new Schema(
         type: String,
         default: null,
     },
-}, 
-{ timestamps: true}
+},
+{ timestamps: true }
 );
 
 module.exports = model('LeaveChannel', leaveChannelSchema);

@@ -15,8 +15,8 @@ const NowLiveSchema = new Schema(
         type: String,
         default: null,
     },
-}, 
-{ timestamps: true}
+},
+{ timestamps: true }
 );
 
 module.exports = model('NowLiveChannel', NowLiveSchema);

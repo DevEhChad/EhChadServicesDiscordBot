@@ -32,7 +32,7 @@ const {
             maxAge = 60 * 60 * 1; // 1 hour in seconds
             break;
           case '6hours':
-            maxAge = 60 * 60 * 6; //6 hours in seconds
+            maxAge = 60 * 60 * 6; // 6 hours in seconds
             break;
           case '12hours':
             maxAge = 60 * 60 * 12; // 12 hours in seconds

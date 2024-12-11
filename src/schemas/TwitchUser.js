@@ -13,8 +13,8 @@ const TwitchUserSchema = new Schema(
         unique: true,
         default: null,
     },
-}, 
-{ timestamps: true}
+},
+{ timestamps: true }
 );
 
 module.exports = model('TwitchUser', TwitchUserSchema);

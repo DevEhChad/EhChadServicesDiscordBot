@@ -15,8 +15,8 @@ const NotifiedStreamSchema = new Schema(
         type: Boolean, 
         default: false 
     }  
-}, 
-{ timestamps: true}
+},
+{ timestamps: true }
 );
 
 module.exports = model('NotifiedStream', NotifiedStreamSchema);
