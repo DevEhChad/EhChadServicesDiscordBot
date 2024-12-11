@@ -56,10 +56,9 @@ client.on('messageCreate', (message) => {
         console.log('✅ Successfully Connected to EhChadServices DB. ✅');
 
         eventHandler(client);
+        sendNowLiveMessage(client);
 
         client.login(process.env.TOKEN);
-
-        sendNowLiveMessage(client);
 
     } catch (error) {
         console.log(`Error: ${error}`);
