@@ -7,7 +7,6 @@ module.exports = {
 
         }
     },
-
     deleted: true,
     devOnly: true,
     name: 'skip',
