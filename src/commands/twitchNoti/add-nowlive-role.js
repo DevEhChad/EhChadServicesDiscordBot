@@ -16,14 +16,14 @@ module.exports = {
 
             if (existingRole) {
                 // Update the existing role
-                existingRole.nowLiveRoleId = role.id;
+                existingRole.NowLiveRoleId = role.id;
                 await existingRole.save();
                 interaction.reply({ content: `Now Live role updated to ${role}`, ephemeral: true });
             } else {
                 // Create a new role entry
                 const newRole = new NowLiveRoleSchema({
                     guildId,
-                    nowLiveRoleId: role.id,
+                    NowLiveRoleId: role.id,
                 });
                 await newRole.save();
                 interaction.reply({ content: `Now Live role set to ${role}`, ephemeral: true });

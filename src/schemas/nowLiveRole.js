@@ -7,11 +7,10 @@ const NowLiveRoleSchema = new Schema(
         required: true,
         unique: true,
     },
-    nowLiveRoleId: {
+    NowLiveRoleId: {
         type: String,
         required: true,
         unique: true,
-        default: null,
     },
 },
 { timestamps: true }
