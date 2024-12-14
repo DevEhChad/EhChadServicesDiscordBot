@@ -61,7 +61,6 @@ module.exports = {
         return;
     },
 
-    //deleted: true,
     name: 'setup-live-channel',
     description: 'Setup a channel to send the live messages to.',
     options: [

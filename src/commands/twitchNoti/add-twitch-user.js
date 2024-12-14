@@ -47,7 +47,7 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
+
     name: 'add-twitch-user',
     description: 'Add Twitch User to get live notifications from.',
     options: [

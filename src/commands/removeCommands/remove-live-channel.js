@@ -41,7 +41,6 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
     name: 'remove-live-channel',
     description: 'removes a live channel from sending live messages.',
     options: [

@@ -48,7 +48,7 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
+
     name: 'remove-youtube-user',
     description: 'Removes a YouTube user from the YouTube user list.',
     options: [

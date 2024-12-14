@@ -26,9 +26,9 @@ module.exports = {
         await interaction.followUp({ content: `**All Twitch Users Added In This Server:**\n\n${twitchInfo}`, ephermal: true });
     },
 
-    //deleted: true
+
     name: 'list-twitch-users',
-    description: 'Lists all Twitch user\'s added for notify in the server.',
+    description: 'Lists all Twitch users added for notify in the server.',
     options: [],
     permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],

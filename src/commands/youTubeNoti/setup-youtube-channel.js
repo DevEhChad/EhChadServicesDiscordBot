@@ -9,8 +9,27 @@ module.exports = {
       * @param {Interaction} interaction
     */
 
-    callback: async (client, interaction,) => {
+    name: 'setup-youtube-channel',
+    description: 'Sets up a YouTube Upload noti channel',
+    options: [
+        {
+            name: 'target-channel',
+            description: 'The channel to get upload messages in.',
+            type: ApplicationCommandOptionType.Channel,
+            required: true,
+        },
+        {
+            name: 'custom-message',
+            description: 'A custom notification message.',
+            type: ApplicationCommandOptionType.String,
+            required: false,
+        },
+    ],
+    permissionsRequired: [PermissionFlagsBits.ManageChannels],
+    botPermissions: [PermissionFlagsBits.ManageChannels],
 
+    callback: async (client, interaction,) => {
+      
         try {
             const targetChannel = interaction.options.getChannel('target-channel');
             const customMessage = interaction.options.getString('custom-message');
@@ -59,26 +78,6 @@ module.exports = {
             console.log('Error', error);
         }
         return;
-    },
-
-    //deleted: true,
-    name: 'setup-youtube-channel',
-    description: 'Sets up a YouTube Upload noti channel',
-    options: [
-        {
-            name: 'target-channel',
-            description: 'The channel to get upload messages in.',
-            type: ApplicationCommandOptionType.Channel,
-            required: true,
-        },
-        {
-            name: 'custom-message',
-            description: 'A custom notification message.',
-            type: ApplicationCommandOptionType.String,
-            required: false,
-        },
-    ],
-    permissionsRequired: [PermissionFlagsBits.ManageChannels],
-    botPermissions: [PermissionFlagsBits.ManageChannels],
+    }
 
 };

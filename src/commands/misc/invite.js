@@ -72,8 +72,7 @@ const {
         await interaction.reply({ content: 'There was an error creating the invite link.', ephemeral: true });
       }
     },
-  
-    //deleted: true,
+    
     name: 'invite',
     description: 'Will create a customizable discord invite to your server.',
     options: [

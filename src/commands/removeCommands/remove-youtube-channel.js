@@ -41,7 +41,6 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
     name: 'remove-youtube-channel',
     description: 'Removes a YouTube channel from sending upload messages.',
     options: [

@@ -30,7 +30,6 @@ module.exports = {
 return; 
 },
 
-    //deleted: true,
     //devOnly: true,
     name: 'simulate-leave',
     description: 'Simulates a member leaving.',

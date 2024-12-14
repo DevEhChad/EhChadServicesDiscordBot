@@ -47,7 +47,7 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
+
     name: 'remove-twitch-user',
     description: 'removes a twitch user from the twitch user list.',
     options: [

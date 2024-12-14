@@ -50,7 +50,6 @@ module.exports = {
         return;
     },
 
-    //deleted: true,
     name: 'setup-leave-channel',
     description: 'Setup a channel to send the leave messages to.',
     options: [

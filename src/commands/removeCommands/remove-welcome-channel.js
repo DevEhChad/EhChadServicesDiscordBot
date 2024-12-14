@@ -41,7 +41,6 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
     name: 'remove-welcome-channel',
     description: 'removes a welcome channel from sending welcome messages.',
     options: [

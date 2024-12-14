@@ -30,7 +30,6 @@ module.exports = {
 return; 
 },
 
-    //deleted: true,
     //devOnly: true,
     name: 'simulate-join',
     description: 'Simulates a member joining.',

@@ -41,7 +41,6 @@ module.exports = {
         }
         return;
     },
-    //deleted: true,
     name: 'remove-leave-channel',
     description: 'removes a leave channel from sending leave messages.',
     options: [

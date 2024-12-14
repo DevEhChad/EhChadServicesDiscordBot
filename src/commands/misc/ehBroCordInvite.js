@@ -35,7 +35,7 @@ module.exports = {
     } return;
   },
 
-  //deleted: true,
+  
   //devOnly: true,
   name: 'ehbrocord-invite',
   description: 'Will send Eh BroCords discords perma invite link.',
