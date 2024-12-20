@@ -1,5 +1,6 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const NowLiveSchema = require('../../schemas/NowLiveChannel');
+const sendNowLiveMessage = require("../../events/nowLive/sendNowLiveMessage");
 
 module.exports = {
 
@@ -53,6 +54,7 @@ module.exports = {
                     interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true });
                     console.log(`DB error in ${__filename}:\n`, error);
                 });
+                sendNowLiveMessage(client);
             return;
 
         } catch (error) {

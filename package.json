@@ -25,6 +25,7 @@
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "fetch": "^1.1.0",
     "ffmpeg-static": "^5.2.0",
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",

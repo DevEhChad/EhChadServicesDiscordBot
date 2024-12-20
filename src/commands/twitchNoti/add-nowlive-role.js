@@ -1,6 +1,7 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
 const NowLiveRoleSchema = require('../../schemas/NowLiveRole');
 
+
 module.exports = {
     /**
      * @param {Client} client
@@ -30,12 +31,15 @@ module.exports = {
                 interaction.reply({ content: `Now Live role set to ${role}`, ephemeral: true });
             }
         } catch (error) {
+
             console.log('Error', error);
             interaction.reply({ content: 'There was an error processing your request.', ephemeral: true });
         }
+        
         return;
     },
-
+    deleted: true,
+    devOnly: true,
     name: 'add-nowlive-role',
     description: 'Set the role to be given when someone goes Live.',
     options: [

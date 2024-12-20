@@ -8,7 +8,7 @@ module.exports = {
       * @param {Client} client
       * @param {Interaction} interaction
     */
-
+    deleted: true,
     name: 'setup-youtube-channel',
     description: 'Sets up a YouTube Upload noti channel',
     options: [

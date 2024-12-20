@@ -27,7 +27,7 @@ module.exports = {
         await interaction.followUp({ content: `**All YouTube Users Added In This Server:**\n\n${youTubeInfo}`, ephemeral: true });
     },
 
-
+    deleted: true,
     name: 'list-youtube-users',
     description: 'Lists all YouTube users added for notify in the server.',
     options: [],

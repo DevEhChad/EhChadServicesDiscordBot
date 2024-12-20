@@ -25,7 +25,8 @@ module.exports = {
             interaction.reply({ content: 'There was an error removing the Now Live role.', ephemeral: true });
         }
     },
-
+    deleted: true,
+    devOnly: true,
     name: 'remove-nowlive-role',
     description: 'Removes the configured Now Live role for this server.',
     permissionsRequired: [PermissionFlagsBits.Administrator],

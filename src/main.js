@@ -2,6 +2,7 @@ require("dotenv").config();
 const mongoose = require('mongoose');
 const eventHandler = require('./handlers/eventHandler');
 const sendNowLiveMessage = require("./events/nowLive/sendNowLiveMessage");
+const sendNowLiveRole = require("./events/nowLive/sendNowLiveRole");
 const axios = require('axios');
 const app = require('express');
 
@@ -16,6 +17,8 @@ const {
     ActionRowBuilder,
     ComponentType,
 } = require('discord.js');
+const NowLiveChannel = require("./schemas/NowLiveChannel");
+const nowLiveRole = require("./events/nowLive/sendNowLiveRole");
 
 //client
 const client = new Client({

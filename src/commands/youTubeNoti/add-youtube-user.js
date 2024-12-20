@@ -51,7 +51,7 @@ module.exports = {
         }
         return;
     },
-
+    deleted: true,
     name: 'add-youtube-user',
     description: 'Add YouTube User for notify',
     options: [

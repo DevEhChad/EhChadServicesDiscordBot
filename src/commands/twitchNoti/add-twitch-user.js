@@ -1,5 +1,6 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
 const TwitchUserSchema = require('../../schemas/TwitchUser');
+const sendNowLiveMessage = require("../../events/nowLive/sendNowLiveMessage");
 
 module.exports = {
 
@@ -40,11 +41,14 @@ module.exports = {
                     interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
                     console.log(`DB error in ${__filename}:\n`, error);
                 });
+                sendNowLiveMessage(client);
             return;
+            
 
         } catch (error) {
             console.log('Error', error);
         }
+        
         return;
     },
 
