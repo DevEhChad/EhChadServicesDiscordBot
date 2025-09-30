@@ -1,4 +1,4 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const TwitchUserSchema = require('../../schemas/TwitchUser');
 
 module.exports = {
@@ -11,25 +11,33 @@ module.exports = {
 
     callback: async (client, interaction) => {
         // Query all Twitch users associated with the guild
-        const twitchUsers = await TwitchUserSchema.find();
+        const twitchUsers = await TwitchUserSchema.find({ guildId: interaction.guildId });
 
         await interaction.deferReply({ ephemeral: true });
 
         if (twitchUsers.length === 0) {
-            await interaction.followUp({ content: "No Twitch users found.", ephermal: true });
+            await interaction.followUp({ content: "There are no Twitch users configured for notifications yet.", ephemeral: true });
             return;
         }
 
         // Collect all URLs with usernames and join them with newlines
-        const twitchInfo = twitchUsers.map(user => `\`${user.twitchId} :\` <https://www.twitch.tv/${user.twitchId}>`).join('\n\n');
+        const description = twitchUsers
+            .map(user => `• ${user.twitchId}: <https://www.twitch.tv/${user.twitchId}>`)
+            .join('\n');
 
-        await interaction.followUp({ content: `**All Twitch Users Added In This Server:**\n\n${twitchInfo}`, ephermal: true });
+        const embed = new EmbedBuilder()
+            .setTitle('Twitch Streamers Being Tracked')
+            .setDescription(description)
+            .setColor('#6441A5') // Twitch purple
+            .setTimestamp();
+
+        await interaction.followUp({ embeds: [embed], ephemeral: true });
     },
 
 
     name: 'list-twitch-users',
     description: 'Lists all Twitch users added for notify in the server.',
     options: [],
-    permissionsRequired: [PermissionFlagsBits.ManageChannels],
-    botPermissions: [PermissionFlagsBits.ManageChannels],
+    permissionsRequired: [PermissionFlagsBits.Administrator],
+    botPermissions: [],
 };

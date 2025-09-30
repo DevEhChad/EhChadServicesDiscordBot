@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const TwitchUserSchema = require('../../schemas/TwitchUser');
+const KickUserSchema = require('../../schemas/KickUser');
 
 module.exports = {
   /**
@@ -8,47 +8,47 @@ module.exports = {
    */
   callback: async (client, interaction) => {
     try {
-      const twitchUsername = interaction.options.getString('twitch-user').toLowerCase();
+      const kickUsername = interaction.options.getString('kick-user').toLowerCase();
 
       await interaction.deferReply({ ephemeral: true });
 
       const query = {
         guildId: interaction.guildId,
-        twitchId: twitchUsername,
+        kickUsername: kickUsername,
       };
 
-      const twitchUserExists = await TwitchUserSchema.findOne(query);
+      const kickUserExists = await KickUserSchema.findOne(query);
 
-      if (twitchUserExists) {
+      if (kickUserExists) {
         interaction.followUp({
-          content: `User "${twitchUsername}" has already been added for this server.`,
+          content: `User "${kickUsername}" has already been added for this server.`,
           ephemeral: true,
         });
         return;
       }
 
-      const newTwitchUser = new TwitchUserSchema(query);
-      await newTwitchUser.save();
+      const newKickUser = new KickUserSchema(query);
+      await newKickUser.save();
 
       interaction.followUp({
-        content: `Successfully added "${twitchUsername}" to the Twitch notification list.`,
+        content: `Successfully added "${kickUsername}" to the Kick notification list.`,
         ephemeral: true,
       });
     } catch (error) {
       console.log(`Error in ${__filename}:\n`, error);
       interaction.followUp({
-        content: 'A database error occurred. Please try again.',
+        content: 'An error occurred. Please try again.',
         ephemeral: true,
       });
     }
   },
 
-    name: 'add-twitch-user',
-    description: 'Add Twitch User to get live notifications from.',
+    name: 'add-kick-user',
+    description: 'Add a Kick User to get live notifications from.',
     options: [
         {
-            name: 'twitch-user',
-            description: 'Add a Twitch User by username. **Not a link**',
+            name: 'kick-user',
+            description: 'The username of the Kick streamer (e.g., "xqc").',
             type: ApplicationCommandOptionType.String,
             required: true
         }

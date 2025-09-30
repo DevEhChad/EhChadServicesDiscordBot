@@ -17,35 +17,31 @@ module.exports = {
 
     callback: async (client, interaction,) => {
         try {
-            const TwitchUser = interaction.options.getString('twitch-user');
+            const twitchUsername = interaction.options.getString('twitch-user').toLowerCase();
 
             await interaction.deferReply({ ephemeral: true });
 
-            const query = {
+            const result = await TwitchUserSchema.deleteOne({
                 guildId: interaction.guildId,
-                twitchId: TwitchUser,
-            };
+                twitchId: twitchUsername,
+            });
 
-            const twitchUserExistInDb = await TwitchUserSchema.exists(query);
-
-            if (!twitchUserExistInDb) {
-                interaction.followUp({ content: `That user hasn't been added to the twitch users list.`, ephemeral: true }); // Ephemeral added
+            if (result.deletedCount === 0) {
+                interaction.followUp({
+                    content: `User "${twitchUsername}" was not found in the notification list.`,
+                    ephemeral: true
+                });
                 return;
             }
 
-            TwitchUserSchema.findOneAndDelete(query)
-                .then(() => {
-                    interaction.followUp({ content: `Removed ${TwitchUser} from the Twitch Users list.`, ephemeral: true }); // Ephemeral added
-                })
-                .catch((error) => {
-                    interaction.followUp({ content: 'Database error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
-                    console.log(`DB error in ${__filename}:\n`, error);
-                })
-            return;
+            interaction.followUp({
+                content: `Successfully removed "${twitchUsername}" from the Twitch notification list.`,
+                ephemeral: true
+            });
         } catch (error) {
             console.log(`Error in ${__filename}:\n`, error);
+            interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
         }
-        return;
     },
 
     name: 'remove-twitch-user',

@@ -1,6 +1,5 @@
 const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const NowLiveSchema = require('../../schemas/NowLiveChannel');
-const sendNowLiveMessage = require("../../events/nowLive/sendNowLiveMessage");
 
 module.exports = {
 
@@ -16,14 +15,14 @@ module.exports = {
             const targetChannel = interaction.options.getChannel('target-channel');
             const customMessage = interaction.options.getString('custom-message');
 
-            await interaction.deferReply({ ephmeral: true });
+            await interaction.deferReply({ ephemeral: true });
 
             const query = {
                 guildId: interaction.guildId,
                 channelId: targetChannel.id,
             };
 
-            const channelExistInDb = await NowLiveSchema.exists(query);
+            const channelExistInDb = await NowLiveSchema.findOne(query);
 
             if (channelExistInDb) {
                 interaction.followUp({ content: 'This channel has already been configured for live messages.', ephemeral: true });
@@ -35,32 +34,23 @@ module.exports = {
                 customMessage,
             });
 
-            newNowLiveChannel
-                .save()
-                .then(() => {
-                    if (customMessage) {
-                        interaction.followUp({
-                            content: `Configured ${targetChannel} to receive live message with a custom message: "**${customMessage}**"`,
-                            ephemeral: true
-                        });
-                    } else {
-                        interaction.followUp({
-                            content: `Configured ${targetChannel} to recieve live messages with the default message.`,
-                            ephemeral: true
-                        })
-                    }
-                })
-                .catch((error) => {
-                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true });
-                    console.log(`DB error in ${__filename}:\n`, error);
-                });
-                sendNowLiveMessage(client);
-            return;
+            await newNowLiveChannel.save();
 
+            if (customMessage) {
+                interaction.followUp({
+                    content: `Configured ${targetChannel} to receive live messages with a custom message: "**${customMessage}**"`,
+                    ephemeral: true
+                });
+            } else {
+                interaction.followUp({
+                    content: `Configured ${targetChannel} to receive live messages with the default message.`,
+                    ephemeral: true
+                });
+            }
         } catch (error) {
-            console.log('Error', error);
+            console.log(`Error in ${__filename}:\n`, error);
+            interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
         }
-        return;
     },
 
     name: 'setup-live-channel',

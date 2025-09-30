@@ -1,17 +1,22 @@
+const { Events } = require('discord.js');
 const { devs, mainServer } = require('../../../config.json');
 const getLocalCommands = require('../../utils/getLocalCommands');
 
-module.exports = async (client, interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+module.exports = {
+  name: Events.InteractionCreate,
+  async execute(client, interaction) {
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
 
-  const localCommands = getLocalCommands();
-
-  try {
+    const localCommands = getLocalCommands();
     const commandObject = localCommands.find(
       (cmd) => cmd.name === interaction.commandName
     );
 
-    if (!commandObject) return;
+    if (!commandObject) {
+      return;
+    }
 
     if (commandObject.devOnly) {
       if (!devs.includes(interaction.member.id)) {
@@ -23,21 +28,11 @@ module.exports = async (client, interaction) => {
       }
     }
 
-    if (commandObject.testOnly) {
-      if (!(interaction.guild.id === mainServer)) {
-        interaction.reply({
-          content: 'This command cannot be ran here.',
-          ephemeral: true,
-        });
-        return;
-      }
-    }
-
     if (commandObject.permissionsRequired?.length) {
       for (const permission of commandObject.permissionsRequired) {
         if (!interaction.member.permissions.has(permission)) {
           interaction.reply({
-            content: 'Not enough permissions.',
+            content: 'You do not have the required permissions to run this command.',
             ephemeral: true,
           });
           return;
@@ -45,22 +40,11 @@ module.exports = async (client, interaction) => {
       }
     }
 
-    if (commandObject.botPermissions?.length) {
-      for (const permission of commandObject.botPermissions) {
-        const bot = interaction.guild.members.me;
-
-        if (!bot.permissions.has(permission)) {
-          interaction.reply({
-            content: "I don't have enough permissions.",
-            ephemeral: true,
-          });
-          return;
-        }
-      }
+    try {
+      await commandObject.callback(client, interaction);
+    } catch (error) {
+      console.log(`There was an error running the command: ${interaction.commandName}`);
+      console.log(error);
     }
-
-    await commandObject.callback(client, interaction);
-  } catch (error) {
-    console.log(`There was an error running this command: ${error}`);
-  }
+  },
 };

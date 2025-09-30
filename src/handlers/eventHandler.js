@@ -1,20 +1,29 @@
 const path = require('path');
-const getAllFiles = require('../utils/getAllFiles');
+const fs = require('fs');
 
 module.exports = (client) => {
-  const eventFolders = getAllFiles(path.join(__dirname, '..', 'events'), true);
+  const eventsPath = path.join(__dirname, '..', 'events');
+  const eventFolders = fs.readdirSync(eventsPath);
 
   for (const eventFolder of eventFolders) {
-    let eventFiles = getAllFiles(eventFolder);
-    eventFiles = eventFiles.sort();
+    const folderPath = path.join(eventsPath, eventFolder);
+    const eventFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
 
-    const eventName = eventFolder.replace(/\\/g, '/').split('/').pop();
+    for (const file of eventFiles) {
+      const filePath = path.join(folderPath, file);
+      const event = require(filePath);
 
-    client.on(eventName, async (arg) => {
-      for (const eventFile of eventFiles) {
-        const eventFunction = require(eventFile);
-        await eventFunction(client, arg);
+      // Check if the event is in the new object format
+      if (event.name && event.execute) {
+        if (event.once) {
+          client.once(event.name, (...args) => event.execute(client, ...args));
+        } else {
+          // Pass client to the execute function
+          client.on(event.name, (...args) => event.execute(client, ...args));
+        }
+      } else {
+        // This will skip files that are not structured as event handlers
       }
-    });
+    }
   }
 };

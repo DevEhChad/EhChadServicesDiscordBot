@@ -11,8 +11,10 @@ module.exports = {
 
   callback: async (client, interaction) => {
     try {
-      interaction.reply({ content: `Sending Live Message!`, ephemeral: true });
-      sendNowLiveMessage(client);
+      // This command is problematic as it re-initializes the interval loop.
+      // The check runs automatically every 15 seconds.
+      // A manual trigger isn't necessary and can cause issues.
+      interaction.reply({ content: `The live-check runs automatically every 15 seconds. A manual trigger is no longer needed.`, ephemeral: true });
     } catch (error) {
       console.log(error);
     }

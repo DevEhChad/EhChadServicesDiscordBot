@@ -1,171 +1,191 @@
-const { Client, GuildMember, IntentsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ButtonComponent, channelLink } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const TwitchUserSchema = require("../../schemas/TwitchUser");
 const NowLiveSchema = require("../../schemas/NowLiveChannel");
+const { Collection } = require('discord.js');
 const axios = require("axios");
 require("dotenv").config();
+
 const twitchClientID = process.env.TWITCH_CLIENT_ID;
 const twitchSecretID = process.env.TWITCH_CLIENT_SECRET;
+
+const TWITCH_API_LIMIT = 100; // Twitch API allows up to 100 users per request
 
 module.exports = async (client) => {
   try {
     let twitchAccessToken = null;
-    const notifiedMap = new Map();
+    const notifiedStreams = new Set(); // Tracks live streams that have been notified: 'twitchId'
+    const twitchUserCache = new Map(); // Caches Twitch user data: 'twitchId' -> { id, profile_image_url }
 
-    async function getTwitchAccessToken() {
-      const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
-        params: {
-          client_id: twitchClientID,
-          client_secret: twitchSecretID,
-          grant_type: 'client_credentials',
-        },
-      });
-      twitchAccessToken = response.data.access_token;
-    }
-
-    function getRandomColor() {
-      const letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    }
-
-    async function isStreamLive(twitchUsername) {
+    const getTwitchAccessToken = async () => {
       try {
-
-        if (!twitchAccessToken) await getTwitchAccessToken();
-
-        const response = await axios.get(`https://api.twitch.tv/helix/streams`, {
+        const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
           params: {
-            user_login: twitchUsername,
-          },
-          headers: {
-            'Client-ID': twitchClientID,
-            'Authorization': `Bearer ${twitchAccessToken}`,
+            client_id: twitchClientID,
+            client_secret: twitchSecretID,
+            grant_type: 'client_credentials',
           },
         });
-
-        return response.data.data.length > 0;
+        twitchAccessToken = response.data.access_token;
       } catch (error) {
-        console.log(`Error: `, error);
+        console.error("Error getting Twitch access token:", error.response?.data || error.message);
+        twitchAccessToken = null;
       }
-    }
+    };
 
-    async function getStreamData(twitchUsername) {
+    const getTwitchUsersData = async (userLogins) => {
+      if (!twitchAccessToken) await getTwitchAccessToken();
+      if (!twitchAccessToken) return;
+
+      const usersToFetch = userLogins.filter(login => !twitchUserCache.has(login));
+      if (usersToFetch.length === 0) return;
+
       try {
-        if (!twitchAccessToken) await getTwitchAccessToken();
-
-        // First request to get the user's ID
-        const userResponse = await axios.get(`https://api.twitch.tv/helix/users`, {
-          params: {
-            login: twitchUsername,
-          },
+        const response = await axios.get('https://api.twitch.tv/helix/users', {
+          params: { login: usersToFetch },
           headers: {
             'Client-ID': twitchClientID,
             'Authorization': `Bearer ${twitchAccessToken}`,
           },
         });
 
-        const userId = userResponse.data.data[0].id;
-
-        // Second request to get the stream data including the profile image
-        const streamResponse = await axios.get(`https://api.twitch.tv/helix/streams`, {
-          params: {
-            user_id: userId,
-          },
-          headers: {
-            'Client-ID': twitchClientID,
-            'Authorization': `Bearer ${twitchAccessToken}`,
-          },
-        });
-
-        return {
-          ...streamResponse.data.data[0],
-          profile_image_url: userResponse.data.data[0].profile_image_url
-        };
+        for (const user of response.data.data) {
+          twitchUserCache.set(user.login, { id: user.id, profile_image_url: user.profile_image_url, description: user.description });
+        }
       } catch (error) {
-        console.log(`Error: `, error)
+        console.error("Error fetching Twitch user data:", error.response?.data || error.message);
+        if (error.response?.status === 401) await getTwitchAccessToken(); // Token might be invalid
       }
-    }
+    };
 
-    async function checkStreamsAndNotify() {
-      const nowLiveChannels = await NowLiveSchema.find();
-      if (!nowLiveChannels || nowLiveChannels.length === 0) {
-        return;
+    const getLiveStreams = async (userLogins) => {
+      if (!twitchAccessToken) await getTwitchAccessToken();
+      if (!twitchAccessToken || userLogins.length === 0) return [];
+
+      try {
+        const response = await axios.get('https://api.twitch.tv/helix/streams', {
+          params: { user_login: userLogins, first: userLogins.length },
+          headers: {
+            'Client-ID': twitchClientID,
+            'Authorization': `Bearer ${twitchAccessToken}`,
+          },
+        });
+        return response.data.data;
+      } catch (error) {
+        console.error("Error fetching Twitch streams:", error.response?.data || error.message);
+        if (error.response?.status === 401) await getTwitchAccessToken(); // Token might be invalid
+        return [];
       }
+    };
 
-      const twitchUsers = await TwitchUserSchema.find();
+    const sendNotification = async (streamData, nowLiveChannels) => {
+      const twitchId = streamData.user_login;
+      const twitchUrl = `https://www.twitch.tv/${twitchId}`;
+      const userData = twitchUserCache.get(twitchId);
 
-      for (const user of twitchUsers) {
-        const { twitchId } = user;
-        const isLive = await isStreamLive(twitchId);
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('Watch Stream')
+          .setURL(twitchUrl)
+          .setStyle(ButtonStyle.Link)
+      );
 
-        if (isLive && !notifiedMap.get(twitchId)) {
-          for (const nowLiveChannel of nowLiveChannels) {
-            try {
-              const channel = await client.channels.fetch(nowLiveChannel.channelId);
-              if (channel) {
-                // Fetch stream data for title and URL
-                const streamData = await getStreamData(twitchId);
-                const streamTitle = streamData?.title || `${twitchId}'s Stream`;
-                const twitchUrl = `https://www.twitch.tv/${twitchId}`;
-                const twitchUserLogo = streamData?.profile_image_url;
-                const gameName = streamData?.game_name || "Unknown Game";
-                const startedAt = streamData?.started_at;
-                const viewerCount = streamData?.viewer_count || 0;
-                const thumbnailUrl = streamData?.thumbnail_url || null;
+      const embed = new EmbedBuilder()
+        .setColor('#6441A5') // Twitch purple
+        .setAuthor({ name: `${twitchId} is now LIVE on Twitch!`, iconURL: userData?.profile_image_url, url: twitchUrl })
+        .setTitle(streamData.title || 'No title provided.')
+        .setURL(twitchUrl)
+        .setThumbnail(userData?.profile_image_url)
+        .setDescription(userData?.description || 'No description provided.')
+        .addFields(
+          { name: 'Game', value: streamData.game_name || 'N/A', inline: true },
+          { name: 'Viewers', value: streamData.viewer_count.toString(), inline: true }
+        )
+        .setImage(streamData.thumbnail_url.replace('{width}', '1280').replace('{height}', '720'))
+        .setTimestamp(new Date(streamData.started_at))
+        .setFooter({ text: 'ehchadservices.com' });
 
-                // Create button
-                const row = new ActionRowBuilder()
-                  .addComponents(
-                    new ButtonBuilder()
-                      .setLabel('Watch Stream')
-                      .setURL(twitchUrl)
-                      .setStyle(ButtonStyle.Link)
-                  );
-
-                const embed = new EmbedBuilder()
-                  .setColor(getRandomColor())
-                  .setTitle(twitchId)
-                  .setDescription(`[${streamTitle}](${twitchUrl})`) // clickable link in description
-                  .setImage(thumbnailUrl)
-                  .setThumbnail(twitchUserLogo)
-                  .addFields(
-                    { name: 'Game', value: gameName, inline: true },
-                    { name: 'Viewers', value: viewerCount.toString(), inline: true },
-                    { name: 'Twitch Link', value: twitchUrl, inline: false },
-                  )
-                  .setFooter({ text: `ehchadservices.com • Stream Started at: ${new Date(startedAt).toLocaleString()}` });
-
-                if (thumbnailUrl) {
-                  embed.setImage(thumbnailUrl.replace('{width}', '1280').replace('{height}', '720'));
-                }
-                // Send custom message above the embed
-                channel.send(nowLiveChannel.customMessage || `**${twitchId}** is now live!`);
-
-                // Send embed with button
-                channel.send({ embeds: [embed], components: [row] });
-              }
-            } catch (error) {
-              if (error.code === 10003) { // 10003: Unknown Channel
-                await NowLiveSchema.deleteOne({ channelId: nowLiveChannel.channelId });
-              } else {
-                console.error(`Error fetching or sending message to channel ${nowLiveChannel.channelId}:`, error);
-              }
-            }
+      for (const config of nowLiveChannels) {
+        try {
+          const channel = await client.channels.fetch(config.channelId);
+          if (channel) {
+            await channel.send({
+              content: config.customMessage?.replace('{user}', twitchId) || `**${twitchId}** is now live!`,
+              embeds: [embed],
+              components: [row],
+            });
           }
-          notifiedMap.set(twitchId, true);
-        } else if (!isLive) {
-          notifiedMap.set(twitchId, false);
+        } catch (error) {
+          if (error.code === 10003) { // Unknown Channel
+            console.log(`Channel ${config.channelId} not found, removing from DB.`);
+            await NowLiveSchema.deleteOne({ channelId: config.channelId });
+          } else {
+            console.error(`Error sending message to channel ${config.channelId}:`, error);
+          }
         }
       }
-    }
+    };
+    const checkStreamsAndNotify = async () => {
+      const allDbUsers = await TwitchUserSchema.find();
+      if (allDbUsers.length === 0) return;
+
+      const allUserLogins = allDbUsers.map(u => u.twitchId);
+      await getTwitchUsersData(allUserLogins);
+
+      const nowLiveChannels = await NowLiveSchema.find();
+      if (nowLiveChannels.length === 0) return;
+
+      // Group notification channels by guildId for efficient lookup
+      const channelsByGuild = new Collection();
+      for (const channel of nowLiveChannels) {
+        if (!channelsByGuild.has(channel.guildId)) {
+          channelsByGuild.set(channel.guildId, []);
+        }
+        channelsByGuild.get(channel.guildId).push(channel);
+      }
+
+      const liveStreamsFound = new Set();
+      // Use a Set to avoid checking the same user multiple times if they are in multiple guilds
+      const uniqueUserLogins = [...new Set(allUserLogins)];
+
+      // Process users in batches
+      for (let i = 0; i < uniqueUserLogins.length; i += TWITCH_API_LIMIT) {
+        const userBatch = uniqueUserLogins.slice(i, i + TWITCH_API_LIMIT);
+        const liveStreams = await getLiveStreams(userBatch);
+
+        for (const stream of liveStreams) {
+          const twitchId = stream.user_login;
+          liveStreamsFound.add(twitchId);
+
+          if (!notifiedStreams.has(twitchId)) {
+            // Find all DB entries for this user to get the guild IDs
+            const relevantUserEntries = allDbUsers.filter(u => u.twitchId === twitchId);
+            // For each guild that tracks the user, send a notification
+            for (const userEntry of relevantUserEntries) {
+              const channelsToNotify = channelsByGuild.get(userEntry.guildId) || [];
+              if (channelsToNotify.length > 0) {
+                await sendNotification(stream, channelsToNotify);
+              }
+            }
+            notifiedStreams.add(twitchId);
+          }
+        }
+      }
+
+      // Clean up users who are no longer live from the notified set
+      for (const twitchId of notifiedStreams) {
+        if (!liveStreamsFound.has(twitchId)) {
+          //console.log(`${twitchId} is no longer live.`);
+          notifiedStreams.delete(twitchId);
+        }
+      }
+    };
 
     await checkStreamsAndNotify();
 
-    setInterval(checkStreamsAndNotify, 2 * 60 * 1000); //sets from seconds. 5 * 60 * 1000 is for minutes
+    // With batching, we can safely lower the interval. 15 seconds is a safe start.
+    // 5 seconds might still be too fast if you have > 100 users, as it would require multiple API calls per check.
+    setInterval(checkStreamsAndNotify, 15 * 1000);
   } catch (error) {
-    console.log(`Error: `, error);
+    console.error("An unexpected error occurred in the now-live message handler:", error);
   }
-}
+};

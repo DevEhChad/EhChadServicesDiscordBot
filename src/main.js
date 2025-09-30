@@ -18,7 +18,7 @@ const {
     ComponentType,
 } = require('discord.js');
 const NowLiveChannel = require("./schemas/NowLiveChannel");
-const nowLiveRole = require("./events/nowLive/sendNowLiveRole");
+const sendKickLiveMessage = require("./events/nowLive/sendKickLiveMessage");
 
 //client
 const client = new Client({
@@ -44,8 +44,6 @@ client.on('messageCreate', (message) => {
 
     const args = message.content.slice(prefix.length).trim().split(/ /);
     const command = args.shift().toLowerCase();
-
-    
      
     // ... add   
     //more test commands
@@ -60,6 +58,8 @@ client.on('messageCreate', (message) => {
 
         eventHandler(client);
         sendNowLiveMessage(client);
+        sendKickLiveMessage(client);
+        sendNowLiveRole(client); // Initialize the live role service
 
         client.login(process.env.TOKEN);
 

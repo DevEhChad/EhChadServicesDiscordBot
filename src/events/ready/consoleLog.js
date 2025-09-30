@@ -1,4 +1,4 @@
-const { Activity, ActivityType } = require("discord.js");
+const { Activity, ActivityType, Events } = require("discord.js");
 
 let status = [
     {
@@ -24,11 +24,14 @@ let status = [
 ]
 
 
-module.exports = (client) => {
-    console.log(`✅ ${client.user.tag} is now online! ✅`);
-
+module.exports = {
+    name: Events.ClientReady,
+    once: true,
+    execute(client) {
+        console.log(`✅ ${client.user.tag} is now online! ✅`);
     setInterval(() => {
         let random = Math.floor(Math.random() * status.length);
         client.user.setActivity(status[random]);
     }, 5000);
+    },
 };
