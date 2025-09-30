@@ -8,7 +8,7 @@
 
  I'm trying to keep this bot coded using the latest Discord.js version.
  
- Current Bot Version: Discord.js@14.16.3
+ Current Bot Version: Discord.js@14.22.1
 
  Thanks for reading! 
 
