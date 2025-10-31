@@ -59,6 +59,9 @@ client.on('messageCreate', (message) => {
         eventHandler(client);
         sendNowLiveMessage(client);
         sendKickLiveMessage(client);
+    // YouTube upload notifier
+    const sendYouTubeUploadNoti = require('./events/youTube/sendYouTubeUploadNoti');
+    sendYouTubeUploadNoti(client);
         sendNowLiveRole(client); // Initialize the live role service
 
         client.login(process.env.TOKEN);

@@ -9,51 +9,30 @@ module.exports = {
   once: true,
   async execute(client) {
     try {
+      // Always reinitialize (bulk replace) application commands on bot start.
       const localCommands = getLocalCommands();
-      const applicationCommands = await getApplicationCommands(
-        client,
-        mainServer
-      );
-  
-      for (const localCommand of localCommands) {
-        const { name, description, options } = localCommand;
-  
-        const existingCommand = await applicationCommands.cache.find(
-          (cmd) => cmd.name === name
-        );
-  
-        if (existingCommand) {
-          if (localCommand.deleted) {
-            await applicationCommands.delete(existingCommand.id);
-            console.log(`🗑 Deleted command "${name}".`);
-            continue;
-          }
-  
-          if (areCommandsDifferent(existingCommand, localCommand)) {
-            await applicationCommands.edit(existingCommand.id, {
-              description,
-              options,
-            });
-  
-            console.log(`🔁 Edited command "${name}".`);
-          }
-        } else {
-          if (localCommand.deleted) {
-            console.log(
-              `⏩ Skipping registering command "${name}" as it's set to delete.`
-            );
-            continue;
-          }
-  
-          await applicationCommands.create({
-            name,
-            description,
-            options,
-          });
-  
-          console.log(`👍 Registered command "${name}."`);
-        }
-      }
+      const applicationCommands = await getApplicationCommands(client, mainServer);
+
+      // Gather local commands payloads (exclude those marked deleted)
+      const payloads = localCommands
+        .filter(c => !c.deleted)
+        .map(c => ({
+          name: c.name,
+          description: c.description || 'No description provided.',
+          options: c.options || [],
+        }));
+
+      const skipped = localCommands.filter(c => c.deleted).length;
+      const existingCount = applicationCommands.cache?.size || 0;
+
+      // Bulk set replaces all existing application commands with `payloads`.
+      await applicationCommands.set(payloads);
+
+      const added = payloads.length;
+      const removed = existingCount; // number of commands replaced
+      const edited = 0; // bulk set recreates commands, so report edits as 0
+
+      console.log(`✅ Commands reinitialized. Added: ${added}, Removed: ${removed}, Edited: ${edited}, Skipped: ${skipped}`);
     } catch (error) {
       console.log(`There was an error: ${error}`);
     }

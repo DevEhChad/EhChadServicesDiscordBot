@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const KickUserSchema = require('../../schemas/KickUser');
 const NowLiveSchema = require('../../schemas/NowLiveChannel');
 const { Collection } = require('discord.js');
@@ -41,13 +41,10 @@ module.exports = async (client) => {
         new ButtonBuilder().setLabel('Watch Stream').setURL(kickUrl).setStyle(ButtonStyle.Link)
       );
 
+      // Mirror Twitch embed layout but use Kick green color and attach the stream thumbnail so Discord displays it reliably.
       const embed = new EmbedBuilder()
         .setColor('#53FC18') // Kick green
-        .setAuthor({
-          name: `${kickUsername} is now LIVE on Kick!`,
-          iconURL: streamData.user.profile_pic,
-          url: kickUrl,
-        })
+        .setAuthor({ name: `${kickUsername} is now LIVE on Kick!`, iconURL: streamData.user.profile_pic, url: kickUrl })
         .setTitle(streamData.livestream?.session_title || streamData.session_title || 'No title provided.')
         .setURL(kickUrl)
         .setThumbnail(streamData.user.profile_pic)
@@ -55,26 +52,91 @@ module.exports = async (client) => {
         .addFields(
           { name: 'Category', value: streamData.livestream?.categories[0]?.name || 'N/A', inline: true },
           { name: 'Viewers', value: (streamData.livestream?.viewer_count ?? 0).toString(), inline: true }
-        );
-      
-      // The stream start time is in the 'livestream' object for Kick
-      if (streamData.livestream?.created_at) {
-        embed.setTimestamp(new Date(streamData.livestream.created_at));
+        )
+        // We'll set the image below after attempting to fetch and attach the current thumbnail.
+        .setTimestamp(streamData.livestream?.created_at ? new Date(streamData.livestream.created_at) : new Date())
+        .setFooter({ text: 'ehchadservices.com' });
+
+      // Resolve a usable image URL from the Kick response (replace placeholders if present)
+      const rawThumbnail = streamData.livestream?.thumbnail?.url || streamData.thumbnail?.url || null;
+      let imageUrl = null;
+      if (rawThumbnail) {
+        imageUrl = rawThumbnail
+          .replace('{width}', '1280')
+          .replace('{height}', '720')
+          .replace('{w}', '1280')
+          .replace('{h}', '720')
+          .replace('{size}', '1280x720');
       }
 
-      embed.setImage(streamData.livestream?.thumbnail?.url || streamData.thumbnail?.url);
-      embed.setFooter({ text: 'ehchadservices.com' });
+  // resolved imageUrl is available if not null
+
+  // Attempt to fetch the image and attach it so Discord displays it reliably.
+      let files = [];
+      if (imageUrl) {
+  try {
+          // Use got-scraping (same lib used above) to retrieve the image with browser-like headers.
+          const imgRes = await gotScraping({
+            url: imageUrl,
+            responseType: 'buffer',
+            timeout: { request: 10000 },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+              Referer: 'https://kick.com/',
+            },
+          });
+
+          const buffer = Buffer.from(imgRes.body);
+
+          // Try to infer an extension from content-type header
+          const contentType = (imgRes.headers && (imgRes.headers['content-type'] || imgRes.headers['Content-Type'])) || '';
+          let ext = 'jpg';
+          if (contentType.includes('png')) ext = 'png';
+          else if (contentType.includes('webp')) ext = 'webp';
+          else if (contentType.includes('gif')) ext = 'gif';
+
+          const fileName = `${kickUsername}-thumb.${ext}`;
+          // If the image is too large for Discord (8MB limit for attachments on many bots), fall back to URL
+          const maxSize = 8 * 1024 * 1024;
+          if (buffer.length > maxSize) {
+            embed.setImage(imageUrl);
+          } else {
+            const attachment = new AttachmentBuilder(buffer, { name: fileName });
+            // Don't set attachment:// on the embed yet. We'll edit the message after upload to use the hosted URL.
+            files.push(attachment);
+          }
+        } catch (err) {
+          // If fetching the image fails, fall back to embedding the remote URL (Discord will try to fetch it).
+          if (imageUrl) embed.setImage(imageUrl);
+        }
+      }
 
       for (const config of nowLiveChannels) {
         try {
           const channel = await client.channels.fetch(config.channelId);
-          if (channel) {
-            await channel.send({
-              content: config.customMessage?.replace('{user}', kickUsername) || `**${kickUsername}** is now live!`,
-              embeds: [embed],
-              components: [row],
-            });
-          }
+            if (channel) {
+              const sendOptions = {
+                content: config.customMessage?.replace('{user}', kickUsername) || `**${kickUsername}** is now live!`,
+                embeds: [embed],
+                components: [row],
+              };
+              if (files.length > 0) sendOptions.files = files;
+
+              const sent = await channel.send(sendOptions);
+
+              // If we uploaded an attachment, edit the message to set the embed image to the uploaded attachment URL
+              if (files.length > 0) {
+                try {
+                  const attachment = sent.attachments.first();
+                  if (attachment && attachment.url) {
+                    const updated = EmbedBuilder.from(embed).setImage(attachment.url);
+                    await sent.edit({ embeds: [updated] });
+                  }
+                } catch (err) {
+                  console.error(`[Kick] Failed to update message embed with attachment URL for ${config.channelId}:`, err);
+                }
+              }
+            }
         } catch (error) {
           if (error.code === 10003) { // Unknown Channel
             await NowLiveSchema.deleteOne({ channelId: config.channelId });
@@ -126,13 +188,13 @@ module.exports = async (client) => {
           const streamId = streamData.livestream.id.toString(); // Ensure it's a string
 
           for (const userEntry of userEntries) {
-            // Check in-memory state first, then the database record.
-            if (notifiedStreams.get(kickUsername.toLowerCase()) !== streamId && userEntry.lastStreamId !== streamId) {
+            // Only use in-memory state to deduplicate during a single bot run.
+            // This allows the bot to notify again on restart but prevents repeated sends while running.
+            if (notifiedStreams.get(kickUsername.toLowerCase()) !== streamId) {
               const channelsToNotify = channelsByGuild.get(userEntry.guildId) || [];
               if (channelsToNotify.length > 0) {
-                //console.log(`[Kick] ${kickUsername} is newly live for guild ${userEntry.guildId}. Sending notification.`);
                 await sendNotification(streamData, channelsToNotify);
-                // Update the database immediately for this specific guild entry
+                // Update the database record for informational purposes and recovery, but do not rely on it to block sends.
                 await KickUserSchema.updateOne({ _id: userEntry._id }, { lastStreamId: streamId });
                 notifiedStreams.set(kickUsername.toLowerCase(), streamId); // Update in-memory state
               }
@@ -154,17 +216,10 @@ module.exports = async (client) => {
       }
     };
 
-    // Initial check on startup
-    const initialUsers = await KickUserSchema.find();
-    for (const user of initialUsers) {
-        if (user.lastStreamId) {
-            // Pre-populate the in-memory map with data from the DB on startup.
-            // This ensures that if the bot restarts while a stream is live, it won't re-notify.
-            notifiedStreams.set(user.kickUsername.toLowerCase(), user.lastStreamId);
-        }
-    }
-    // Perform the first check after populating the cache.
-    checkKickStreams();
+  // Perform the first check on startup. We intentionally DO NOT pre-populate the in-memory
+  // map from the DB so the bot will repost currently live streams when it (re)starts.
+  // The in-memory `notifiedStreams` map will prevent duplicate sends while the process is running.
+  checkKickStreams();
 
 
     // Run check every 30 seconds.
