@@ -34,7 +34,7 @@ module.exports = {
       interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
     }
   },
-
+  deleted: true,
   name: 'remove-kick-user',
   description: 'Remove a Kick User from the live notifications list.',
   options: [

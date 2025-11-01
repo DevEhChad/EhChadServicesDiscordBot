@@ -6,6 +6,12 @@ const axios = require('axios');
 require('dotenv').config();
 
 module.exports = async (client) => {
+  // Allow disabling the Kick notifier via environment variable without deleting the file.
+  if (process.env.DISABLE_KICK_NOTIFIER === 'true' || process.env.DISABLE_KICK === 'true') {
+    console.log('[Kick] Notifier disabled by DISABLE_KICK_NOTIFIER env var. Skipping initialization.');
+    return;
+  }
+
   try {
     console.log('🟢 Kick Live Notifier service started.');
     const { gotScraping } = await import('got-scraping');

@@ -42,7 +42,7 @@ module.exports = {
       });
     }
   },
-
+    deleted: true,
     name: 'add-kick-user',
     description: 'Add a Kick User to get live notifications from.',
     options: [

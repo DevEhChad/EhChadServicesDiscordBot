@@ -1,5 +1,6 @@
 const { Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const KickUserSchema = require('../../schemas/KickUser');
+const { deleted } = require('./remove-kick-user');
 
 module.exports = {
   /**
@@ -28,7 +29,7 @@ module.exports = {
 
     await interaction.followUp({ embeds: [embed], ephemeral: true });
   },
-
+  deleted: true,
   name: 'list-kick-users',
   description: 'Lists all Kick users being tracked for live notifications.',
   options: [],
