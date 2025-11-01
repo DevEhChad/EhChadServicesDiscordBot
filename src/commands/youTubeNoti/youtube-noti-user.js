@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
+  deleted: true,
   data: new SlashCommandBuilder()
     .setName('youtube-noti-user')
     .setDescription('Add, remove, or toggle a YouTube user for upload notifications.')

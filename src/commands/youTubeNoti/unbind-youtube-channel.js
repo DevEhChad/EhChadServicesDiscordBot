@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
+  deleted: true,
   data: new SlashCommandBuilder()
     .setName('unbind-youtube-channel')
     .setDescription('Unbind the YouTube notifications channel for this server.'),

@@ -2,6 +2,7 @@ const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits }
 const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
+    deleted: true,
     /** 
      * 
      * @param {Client} client

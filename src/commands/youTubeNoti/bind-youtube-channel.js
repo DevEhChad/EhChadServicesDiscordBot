@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
+  deleted: true,
   data: new SlashCommandBuilder()
     .setName('bind-youtube-channel')
     .setDescription('Bind this server to a channel to receive YouTube upload notifications')

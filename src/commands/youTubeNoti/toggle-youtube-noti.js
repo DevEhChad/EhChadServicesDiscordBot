@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
+  deleted: true,
   data: new SlashCommandBuilder()
     .setName('toggle-youtube-noti')
     .setDescription('Enable or disable YouTube upload notifications for this server')
