@@ -1,5 +1,6 @@
 {
     "mainServer": "Server_ID",
     "clientId": "BOT_ID",
-    "devs": ["Your_ID_OR_Dev_ID"]
+    "devs": ["Your_ID_OR_Dev_ID"],
+    "disableKickNotifier": false
 }
