@@ -4,11 +4,14 @@ const NowLiveSchema = require('../../schemas/NowLiveChannel');
 const { Collection } = require('discord.js');
 const axios = require('axios');
 require('dotenv').config();
+const { disableKickNotifier } = require('../../../config.json');
 
 module.exports = async (client) => {
-  // Allow disabling the Kick notifier via environment variable without deleting the file.
-  if (process.env.DISABLE_KICK_NOTIFIER === 'true' || process.env.DISABLE_KICK === 'true') {
-    console.log('[Kick] Notifier disabled by DISABLE_KICK_NOTIFIER env var. Skipping initialization.');
+  // Allow disabling the Kick notifier via config.json (preferred) or environment variable (fallback)
+  const disabledByConfig = !!disableKickNotifier;
+  const disabledByEnv = (process.env.DISABLE_KICK_NOTIFIER === 'true' || process.env.DISABLE_KICK === 'true');
+  if (disabledByConfig || disabledByEnv) {
+    console.log('[Kick] Notifier disabled by configuration. Skipping initialization.');
     return;
   }
 
@@ -108,7 +111,9 @@ module.exports = async (client) => {
             embed.setImage(imageUrl);
           } else {
             const attachment = new AttachmentBuilder(buffer, { name: fileName });
-            // Don't set attachment:// on the embed yet. We'll edit the message after upload to use the hosted URL.
+            // Set the embed image to reference the attachment directly so Discord uses the attachment inside the embed
+            // This prevents the duplicate top-level file preview + embed image that occurs when editing after-send.
+            embed.setImage(`attachment://${fileName}`);
             files.push(attachment);
           }
         } catch (err) {
@@ -130,18 +135,7 @@ module.exports = async (client) => {
 
               const sent = await channel.send(sendOptions);
 
-              // If we uploaded an attachment, edit the message to set the embed image to the uploaded attachment URL
-              if (files.length > 0) {
-                try {
-                  const attachment = sent.attachments.first();
-                  if (attachment && attachment.url) {
-                    const updated = EmbedBuilder.from(embed).setImage(attachment.url);
-                    await sent.edit({ embeds: [updated] });
-                  }
-                } catch (err) {
-                  console.error(`[Kick] Failed to update message embed with attachment URL for ${config.channelId}:`, err);
-                }
-              }
+              // No post-send edit required because embed references the attachment via attachment://filename
             }
         } catch (error) {
           if (error.code === 10003) { // Unknown Channel
