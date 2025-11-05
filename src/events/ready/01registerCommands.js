@@ -14,25 +14,24 @@ module.exports = {
       const applicationCommands = await getApplicationCommands(client, mainServer);
 
       // Gather local commands payloads (exclude those marked deleted)
-      const payloads = localCommands
-        .filter(c => !c.deleted)
-        .map(c => ({
-          name: c.name,
-          description: c.description || 'No description provided.',
-          options: c.options || [],
-        }));
+      const toRegister = localCommands.filter(c => !c.deleted);
+      const payloads = toRegister.map(c => ({
+        name: c.name,
+        description: c.description || 'No description provided.',
+        options: c.options || [],
+      }));
 
-      const skipped = localCommands.filter(c => c.deleted).length;
+      const skipped = localCommands.filter(c => c.deleted).map(c => c.name);
       const existingCount = applicationCommands.cache?.size || 0;
 
       // Bulk set replaces all existing application commands with `payloads`.
       await applicationCommands.set(payloads);
 
-      const added = payloads.length;
-      const removed = existingCount; // number of commands replaced
-      const edited = 0; // bulk set recreates commands, so report edits as 0
+  const added = payloads.length;
+  const removed = existingCount; // number of commands replaced
+  const edited = 0; // bulk set recreates commands, so report edits as 0
 
-      console.log(`✅ Commands reinitialized. Added: ${added}, Removed: ${removed}, Edited: ${edited}, Skipped: ${skipped}`);
+  console.log(`✅ Commands reinitialized. Count: ${added} (skipped: ${skipped.length}).`);
     } catch (error) {
       console.log(`There was an error: ${error}`);
     }

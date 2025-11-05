@@ -1,59 +1,35 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder } = require('@discordjs/builders');
+const { PermissionFlagsBits } = require('discord.js');
 const KickUserSchema = require('../../schemas/KickUser');
 
 module.exports = {
-  /**
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  callback: async (client, interaction) => {
+  data: new SlashCommandBuilder()
+    .setName('add-kick-user')
+    .setDescription('Add a Kick user to receive live notifications')
+    .addStringOption((opt) => opt.setName('kick_username').setDescription('Kick username (e.g., xqc)').setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
     try {
-      const kickUsername = interaction.options.getString('kick-user').toLowerCase();
+      if (!interaction.guild) return interaction.editReply({ content: 'This command must be used in a server.' });
+      const raw = interaction.options.getString('kick_username');
+      if (!raw) return interaction.editReply({ content: 'Please provide a Kick username.' });
 
-      await interaction.deferReply({ ephemeral: true });
-
-      const query = {
-        guildId: interaction.guildId,
-        kickUsername: kickUsername,
-      };
-
-      const kickUserExists = await KickUserSchema.findOne(query);
-
-      if (kickUserExists) {
-        interaction.followUp({
-          content: `User "${kickUsername}" has already been added for this server.`,
-          ephemeral: true,
-        });
-        return;
+      const kickUsername = raw.trim().toLowerCase();
+      if (!/^[a-z0-9_\-]{2,32}$/.test(kickUsername)) {
+        return interaction.editReply({ content: 'That does not look like a valid Kick username.' });
       }
 
-      const newKickUser = new KickUserSchema(query);
-      await newKickUser.save();
+      const query = { guildId: interaction.guild.id, kickUsername };
+  const exists = await KickUserSchema.findOne(query);
+  if (exists) return interaction.editReply({ content: 'User `'+kickUsername+'` is already being tracked in this server.', ephemeral: true });
 
-      interaction.followUp({
-        content: `Successfully added "${kickUsername}" to the Kick notification list.`,
-        ephemeral: true,
-      });
-    } catch (error) {
-      console.log(`Error in ${__filename}:\n`, error);
-      interaction.followUp({
-        content: 'An error occurred. Please try again.',
-        ephemeral: true,
-      });
+  await KickUserSchema.create(query);
+  return interaction.editReply({ content: 'Added `'+kickUsername+'` to Kick notifications for this server.' });
+    } catch (err) {
+      console.error('[Kick] add-kick-user error:', err);
+      return interaction.editReply({ content: 'An error occurred while adding the Kick user. Check logs.' });
     }
   },
-    deleted: true,
-    name: 'add-kick-user',
-    description: 'Add a Kick User to get live notifications from.',
-    options: [
-        {
-            name: 'kick-user',
-            description: 'The username of the Kick streamer (e.g., "xqc").',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }
-    ],
-    permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.ManageRoles],
-
 };

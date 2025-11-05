@@ -111,7 +111,31 @@ module.exports = {
     }
 
     try {
-      await commandObject.callback(client, interaction);
+      // Support both new-style commands (exporting `data` + `execute(interaction)`)
+      // and legacy callback-style commands (exporting `callback(client, interaction)`).
+      if (typeof commandObject.execute === 'function') {
+        // Call execute with the expected number of arguments.
+        // Many commands use execute(interaction) but some older ones may accept (client, interaction).
+        const sig = commandObject.execute.length;
+        if (sig === 1) {
+          await commandObject.execute(interaction);
+        } else if (sig === 2) {
+          await commandObject.execute(client, interaction);
+        } else {
+          // Unknown signature; try safe call with interaction first.
+          await commandObject.execute(interaction).catch(async () => {
+            try {
+              await commandObject.execute(client, interaction);
+            } catch (err) {
+              throw err;
+            }
+          });
+        }
+      } else if (typeof commandObject.callback === 'function') {
+        await commandObject.callback(client, interaction);
+      } else {
+        console.log(`Command ${interaction.commandName} has no executable handler.`);
+      }
     } catch (error) {
       console.log(`There was an error running the command: ${interaction.commandName}`);
       console.log(error);
