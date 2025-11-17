@@ -20,6 +20,15 @@ const {
 const NowLiveChannel = require("./schemas/NowLiveChannel");
 const sendKickLiveMessage = require("./events/nowLive/sendKickLiveMessage");
 
+// Global error handlers to capture uncaught errors during runtime
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 //client
 const client = new Client({
     intents: [
@@ -56,6 +65,7 @@ client.on('messageCreate', (message) => {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Successfully Connected to EhChadServices DB. ✅');
 
+        // Register event handlers
         eventHandler(client);
         sendNowLiveMessage(client);
         sendKickLiveMessage(client);
@@ -64,7 +74,7 @@ client.on('messageCreate', (message) => {
     sendYouTubeUploadNoti(client);
         sendNowLiveRole(client); // Initialize the live role service
 
-        client.login(process.env.TOKEN);
+        await client.login(process.env.TOKEN);
 
     } catch (error) {
         console.log(`Error: ${error}`);
