@@ -22,7 +22,7 @@ module.exports = (client) => {
           client.on(event.name, (...args) => event.execute(client, ...args));
         }
       } else {
-        // This will skip files that are not structured as event handlers
+        // Skip non-event files
       }
     }
   }
