@@ -11,44 +11,54 @@ module.exports = {
 
     callback: async (client, interaction,) => {
 
+        await interaction.deferReply({ ephemeral: true });
+
         try {
             const targetChannel = interaction.options.getChannel('target-channel');
-            const customMessage = interaction.options.getString('custom-message');
+            const customMessage = interaction.options.getString('custom-message') ?? null;
 
-            await interaction.deferReply({ ephemeral: true }); // Corrected spelling of 'ephemeral'
+            if (!targetChannel) {
+                await interaction.followUp({ content: 'Please provide a valid channel.', ephemeral: true });
+                return;
+            }
+
+            // Ensure channel is a text-based channel we can send messages to
+            if (typeof targetChannel.isTextBased === 'function' && !targetChannel.isTextBased()) {
+                await interaction.followUp({ content: 'The selected channel is not a text channel.', ephemeral: true });
+                return;
+            }
+
+            // Check bot permissions in the target channel
+            const me = interaction.guild?.members?.me || (await interaction.guild.members.fetchMe?.());
+            const botPerms = targetChannel.permissionsFor(me);
+            if (!botPerms || !botPerms.has(['ViewChannel', 'SendMessages'])) {
+                await interaction.followUp({ content: 'I do not have permission to send messages in that channel. Please adjust permissions and try again.', ephemeral: true });
+                return;
+            }
 
             const query = {
                 guildId: interaction.guildId,
                 channelId: targetChannel.id,
             };
 
-            const channelExistInDb = await welcomeChannelSchema.exists(query);
+            // Upsert the welcome channel atomically to avoid duplicate-key races
+            const update = { customMessage };
+            const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
 
-            if (channelExistInDb) {
-                interaction.followUp({ content: 'This channel has already been configured for welcome messages.', ephemeral: true }); // Ephemeral added
-                return;
-            }
+            await welcomeChannelSchema.findOneAndUpdate(query, update, opts);
 
-            const newWelcomeChannel = new welcomeChannelSchema({
-                ...query,
-                customMessage,
-            });
-
-            newWelcomeChannel
-                .save()
-                .then(() => {
-                    interaction.followUp({ content: `Configured ${targetChannel} to receive welcome messages.`, ephemeral: true }); // Ephemeral added
-                })
-                .catch((error) => {
-                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
-                    console.log(`DB error in ${__filename}:\n`, error);
-                });
+            await interaction.followUp({ content: `Configured ${targetChannel} to receive welcome messages.`, ephemeral: true });
             return;
 
         } catch (error) {
-            console.log('Error', error);
+            console.log(`Error in ${__filename}:`, error);
+            try {
+                await interaction.followUp({ content: 'An unexpected error occurred. Please try again later.', ephemeral: true });
+            } catch (e) {
+                // ignore follow-up errors
+            }
+            return;
         }
-        return;
     },
 
     //deleted: true,
