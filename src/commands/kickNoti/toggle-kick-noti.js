@@ -1,7 +1,8 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
 const Toggle = require('../../schemas/Toggle');
 
-module.exports = {
+/*module.exports = {
+
   data: new SlashCommandBuilder()
     .setName('toggle-kick-noti')
     .setDescription('Enable or disable Kick notifications for this server')
@@ -22,4 +23,43 @@ module.exports = {
       return interaction.reply({ content: 'Failed to save configuration. Check bot logs.', ephemeral: true });
     }
   }
+};
+*/
+module.exports = {
+    /** 
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
+    callback: async (client, interaction,) => {
+        try {
+            const enabled = interaction.options.getBoolean('enabled');
+            await interaction.deferReply({ ephemeral: true });
+            await Toggle.findOneAndUpdate(
+                { key: `kick-noti`, type: 'service', guildId: interaction.guildId },
+                { key: `kick-noti`, type: 'service', guildId: interaction.guildId, enabled, devOnly: false },
+                { upsert: true }
+            );
+            interaction.followUp({
+                content: `Kick notifications have been ${enabled ? 'enabled' : 'disabled'} for this server.`,
+                ephemeral: true
+            });
+        } catch (error) {
+            console.log(`Error in ${__filename}:\n`, error);
+            interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+        }
+    },
+
+    name: 'toggle-kick-noti',
+    description: 'Enable or disable Kick notifications for this server',
+    options: [
+        {
+            name: 'enabled',
+            description: 'Enable Kick notifications?',
+            type: ApplicationCommandOptionType.Boolean,
+            required: true,
+        }
+    ],
+    permissionsRequired: [PermissionFlagsBits.Administrator],
+    botPermissions: [PermissionFlagsBits.ManageChannels],
 };

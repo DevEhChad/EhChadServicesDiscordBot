@@ -1,8 +1,57 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { PermissionFlagsBits } = require('discord.js');
+const {
+    ApplicationCommandOptionType,
+    Client,
+    Interaction,
+    PermissionFlagsBits
+} = require('discord.js');
 const KickUserSchema = require('../../schemas/KickUser');
 
 module.exports = {
+  /**
+   * 
+   * @param {Client} client
+   * @param {Interaction} interaction
+   */
+  callback: async (client, interaction) => {
+    await interaction.deferReply({ ephemeral: true });
+    try {
+      const kickUsername = interaction.options.getString('kick-username').toLowerCase();
+      const result = await KickUserSchema.deleteOne({
+        guildId: interaction.guildId,
+        kickUsername: kickUsername,
+      });
+      if (result.deletedCount === 0) {
+        interaction.followUp({
+          content: `User "${kickUsername}" was not found in the notification list.`,
+          ephemeral: true,
+        });
+        return;
+      }
+      interaction.followUp({
+        content: `Successfully removed "${kickUsername}" from the Kick notification list.`,
+        ephemeral: true,
+      });
+    }
+    catch (error) {
+      console.log(`Error in ${__filename}:\n`, error);
+      interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+    }
+  },
+    name: 'remove-kick-user',
+    description: 'Removes a Kick user from the Kick user list.',
+    options: [
+        {
+            name: 'kick-username',
+            description: 'The Kick user to remove.',
+            type: ApplicationCommandOptionType.String,
+            required: true,
+        }
+    ],
+    permissionsRequired: [PermissionFlagsBits.Administrator],
+    botPermissions: [PermissionFlagsBits.ManageChannels],
+};
+
+/*module.exports = {
   data: new SlashCommandBuilder()
     .setName('remove-kick-user')
     .setDescription('Remove a Kick user from live notifications')
@@ -30,4 +79,4 @@ module.exports = {
       return interaction.editReply({ content: 'An error occurred while removing the Kick user. Check logs.' });
     }
   },
-};
+};*/
