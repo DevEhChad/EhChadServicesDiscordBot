@@ -1,7 +1,7 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
 const KickNowLiveChannel = require('../../schemas/KickNowLiveChannel');
 
-module.exports = {
+/*module.exports = {
   data: new SlashCommandBuilder()
     .setName('setup-kick-channel')
     .setDescription('Bind the current channel as the Kick notifications channel for this server')
@@ -43,4 +43,52 @@ module.exports = {
       return interaction.reply({ content: 'Failed to save configuration. Check bot logs.', ephemeral: true });
     }
   }
+};*/
+
+module.exports = {
+    /** 
+     * 
+     * @param {Client} client
+     * @param {Interaction} interaction
+     */
+    callback: async (client, interaction,) => {
+        try {
+            const targetChannel = interaction.channelId;
+            const customMessage = interaction.options.getString('message') || null;
+            await interaction.deferReply({ ephemeral: true });
+            const newKickNowLiveChannel = new KickNowLiveChannel({
+                guildId: interaction.guildId,
+                channelId: targetChannel,
+                customMessage,
+            });
+            await newKickNowLiveChannel.save();
+            if (customMessage) {
+                interaction.followUp({
+                    content: `Configured <#${targetChannel}> to receive Kick notifications with a custom message: "**${customMessage}**"`,
+                    ephemeral: true
+                });
+            } else {
+                interaction.followUp({
+                    content: `Configured <#${targetChannel}> to receive Kick notifications with the default message.`,
+                    ephemeral: true
+                });
+            }
+        } catch (error) {
+            console.log(`Error in ${__filename}:\n`, error);
+            interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+        }
+    },
+
+    name: 'setup-kick-channel',
+    description: 'Bind the current channel as the Kick notifications channel for this server',
+    options: [
+        {
+            name: 'message',
+            description: 'Optional custom message (use {user} for streamer).',
+            type: ApplicationCommandOptionType.String,
+            required: false,
+        }
+    ],
+    permissionsRequired: [PermissionFlagsBits.Administrator],
+    botPermissions: [PermissionFlagsBits.ManageChannels],
 };
