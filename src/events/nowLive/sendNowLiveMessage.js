@@ -78,31 +78,37 @@ module.exports = async (client) => {
     };
 
     const sendNotification = async (streamData, nowLiveChannels) => {
-      const twitchId = streamData.user_login;
-      const twitchUrl = `https://www.twitch.tv/${twitchId}`;
-      const userData = twitchUserCache.get(twitchId);
+  const twitchId = streamData.user_login;
+  const twitchUrl = `https://www.twitch.tv/${twitchId}`;
+  const userData = twitchUserCache.get(twitchId);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel('Watch Stream')
-          .setURL(twitchUrl)
-          .setStyle(ButtonStyle.Link)
-      );
+  // Add a timestamp to bypass Discord's cache
+  const cacheBuster = Date.now(); 
+  const imageUrl = streamData.thumbnail_url
+    .replace('{width}', '1280')
+    .replace('{height}', '720') + `?v=${cacheBuster}`; // Append the cache buster here
 
-      const embed = new EmbedBuilder()
-        .setColor('#6441A5') // Twitch purple
-        .setAuthor({ name: `${twitchId} is now LIVE on Twitch!`, iconURL: userData?.profile_image_url, url: twitchUrl })
-        .setTitle(streamData.title || 'No title provided.')
-        .setURL(twitchUrl)
-        .setThumbnail(userData?.profile_image_url)
-        .setDescription(userData?.description || 'No description provided.')
-        .addFields(
-          { name: 'Game', value: streamData.game_name || 'N/A', inline: true },
-          { name: 'Viewers', value: streamData.viewer_count.toString(), inline: true }
-        )
-        .setImage(streamData.thumbnail_url.replace('{width}', '1280').replace('{height}', '720'))
-        .setTimestamp(new Date(streamData.started_at))
-        .setFooter({ text: 'ehchadservices.com' });
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel('Watch Stream')
+      .setURL(twitchUrl)
+      .setStyle(ButtonStyle.Link)
+  );
+
+  const embed = new EmbedBuilder()
+    .setColor('#6441A5')
+    .setAuthor({ name: `${twitchId} is now LIVE on Twitch!`, iconURL: userData?.profile_image_url, url: twitchUrl })
+    .setTitle(streamData.title || 'No title provided.')
+    .setURL(twitchUrl)
+    .setThumbnail(userData?.profile_image_url)
+    .setDescription(userData?.description || 'No description provided.')
+    .addFields(
+      { name: 'Game', value: streamData.game_name || 'N/A', inline: true },
+      { name: 'Viewers', value: streamData.viewer_count.toString(), inline: true }
+    )
+    .setImage(imageUrl) // Use the new URL with the cache buster
+    .setTimestamp(new Date(streamData.started_at))
+    .setFooter({ text: 'ehchadservices.com' });
 
       for (const config of nowLiveChannels) {
         try {
