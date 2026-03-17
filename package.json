@@ -4,7 +4,7 @@
   "description": "EhChads Latest up to date discord bot.",
   "main": "src/main.js",
   "scripts": {
-    "start": "nodemon main.js"
+    "start": "nodemon src/main.js"
   },
   "repository": {
     "type": "git",
