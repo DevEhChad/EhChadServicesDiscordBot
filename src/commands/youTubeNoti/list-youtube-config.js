@@ -1,0 +1,57 @@
+const { Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const YouTubeNoti = require('../../schemas/YouTubeNoti');
+
+module.exports = {
+  name: 'list-youtube-config',
+  description: 'Shows the current YouTube upload notification configuration for this server.',
+  options: [],
+  permissionsRequired: [PermissionFlagsBits.ManageChannels],
+  botPermissions: [],
+
+  /**
+   * @param {Client} client
+   * @param {Interaction} interaction
+   */
+  callback: async (client, interaction) => {
+    try {
+      await interaction.deferReply({ ephemeral: true });
+
+      const config = await YouTubeNoti.findOne({ guildId: interaction.guildId });
+
+      if (!config) {
+        return interaction.followUp({
+          content: 'No YouTube notification configuration found for this server.\nGet started with `/bind-youtube-channel` and `/youtube-noti-user add`.',
+          ephemeral: true,
+        });
+      }
+
+      const notifChannel = config.channelId ? `<#${config.channelId}>` : '`Not set`';
+      const status = config.enabled ? '✅ Enabled' : '❌ Disabled';
+      const customMessage = config.customMessage
+        ? `\`${config.customMessage}\``
+        : '`Default — **{user}** uploaded a new video!`';
+
+      const userList = config.users.length > 0
+        ? config.users.map(u => `• \`${u.youtubeId}\` — ${u.enabled ? '✅ Active' : '❌ Paused'}`).join('\n')
+        : '`None added` — use `/youtube-noti-user add` to add a YouTube channel.';
+
+      const embed = new EmbedBuilder()
+        .setColor('#FF0000')
+        .setTitle('YouTube Upload Notification Config')
+        .addFields(
+          { name: 'Status', value: status, inline: true },
+          { name: 'Notification Channel', value: notifChannel, inline: true },
+          { name: '\u200b', value: '\u200b', inline: true },
+          { name: 'Custom Message', value: customMessage, inline: false },
+          { name: `Monitored Channels (${config.users.length})`, value: userList, inline: false },
+        )
+        .setFooter({ text: 'Tip: Use {user} in your custom message to include the YouTube channel name.' });
+
+      return interaction.followUp({ embeds: [embed], ephemeral: true });
+
+    } catch (error) {
+      console.log(`Error in ${__filename}:\n`, error);
+      return interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+    }
+  },
+};

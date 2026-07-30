@@ -14,6 +14,8 @@ module.exports = async (client) => {
   try {
     let twitchAccessToken = null;
     const notifiedStreams = new Set(); // Tracks live streams that have been notified: 'twitchId'
+    const liveMessages = new Map();   // key: `${twitchId}:${guildId}:${channelId}` -> { msg, lastUpdatedAt }
+    const VIEWER_UPDATE_INTERVAL = 5 * 60 * 1000; // Update viewer count every 5 minutes
     const twitchUserCache = new Map(); // Caches Twitch user data: 'twitchId' -> { id, profile_image_url }
 
     const getTwitchAccessToken = async () => {
@@ -77,16 +79,36 @@ module.exports = async (client) => {
       }
     };
 
+    const buildTwitchEmbed = (streamData, userData) => {
+      const twitchId = streamData.user_login;
+      const twitchUrl = `https://www.twitch.tv/${twitchId}`;
+      const cacheBuster = Date.now();
+      const imageUrl = streamData.thumbnail_url
+        .replace('{width}', '1280')
+        .replace('{height}', '720') + `?v=${cacheBuster}`;
+
+      return new EmbedBuilder()
+        .setColor('#6441A5')
+        .setAuthor({ name: `${twitchId} is now LIVE on Twitch!`, iconURL: userData?.profile_image_url, url: twitchUrl })
+        .setTitle(streamData.title || 'No title provided.')
+        .setURL(twitchUrl)
+        .setThumbnail(userData?.profile_image_url)
+        .setDescription(userData?.description || 'No description provided.')
+        .addFields(
+          { name: 'Game', value: streamData.game_name || 'N/A', inline: true },
+          { name: 'Viewers', value: streamData.viewer_count.toLocaleString(), inline: true }
+        )
+        .setImage(imageUrl)
+        .setTimestamp(new Date(streamData.started_at))
+        .setFooter({ text: 'ehchadservices.com' });
+    };
+
     const sendNotification = async (streamData, nowLiveChannels) => {
   const twitchId = streamData.user_login;
   const twitchUrl = `https://www.twitch.tv/${twitchId}`;
   const userData = twitchUserCache.get(twitchId);
 
-  // Add a timestamp to bypass Discord's cache
-  const cacheBuster = Date.now(); 
-  const imageUrl = streamData.thumbnail_url
-    .replace('{width}', '1280')
-    .replace('{height}', '720') + `?v=${cacheBuster}`; // Append the cache buster here
+  const embed = buildTwitchEmbed(streamData, userData);
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -95,30 +117,16 @@ module.exports = async (client) => {
       .setStyle(ButtonStyle.Link)
   );
 
-  const embed = new EmbedBuilder()
-    .setColor('#6441A5')
-    .setAuthor({ name: `${twitchId} is now LIVE on Twitch!`, iconURL: userData?.profile_image_url, url: twitchUrl })
-    .setTitle(streamData.title || 'No title provided.')
-    .setURL(twitchUrl)
-    .setThumbnail(userData?.profile_image_url)
-    .setDescription(userData?.description || 'No description provided.')
-    .addFields(
-      { name: 'Game', value: streamData.game_name || 'N/A', inline: true },
-      { name: 'Viewers', value: streamData.viewer_count.toString(), inline: true }
-    )
-    .setImage(imageUrl) // Use the new URL with the cache buster
-    .setTimestamp(new Date(streamData.started_at))
-    .setFooter({ text: 'ehchadservices.com' });
-
       for (const config of nowLiveChannels) {
         try {
           const channel = await client.channels.fetch(config.channelId);
           if (channel) {
-            await channel.send({
+            const msg = await channel.send({
               content: config.customMessage?.replace('{user}', twitchId) || `**${twitchId}** is now live!`,
               embeds: [embed],
               components: [row],
             });
+            liveMessages.set(`${twitchId}:${config.guildId}:${config.channelId}`, { msg, lastUpdatedAt: Date.now() });
           }
         } catch (error) {
           if (error.code === 10003) { // Unknown Channel
@@ -163,9 +171,8 @@ module.exports = async (client) => {
           liveStreamsFound.add(twitchId);
 
           if (!notifiedStreams.has(twitchId)) {
-            // Find all DB entries for this user to get the guild IDs
+            // First time going live — send notification
             const relevantUserEntries = allDbUsers.filter(u => u.twitchId === twitchId);
-            // For each guild that tracks the user, send a notification
             for (const userEntry of relevantUserEntries) {
               const channelsToNotify = channelsByGuild.get(userEntry.guildId) || [];
               if (channelsToNotify.length > 0) {
@@ -173,15 +180,33 @@ module.exports = async (client) => {
               }
             }
             notifiedStreams.add(twitchId);
+          } else {
+            // Already notified — update viewer count in existing message(s)
+            const relevantUserEntries = allDbUsers.filter(u => u.twitchId === twitchId);
+            const userData = twitchUserCache.get(twitchId);
+            const updatedEmbed = buildTwitchEmbed(stream, userData);
+            for (const userEntry of relevantUserEntries) {
+              const channelsToNotify = channelsByGuild.get(userEntry.guildId) || [];
+              for (const config of channelsToNotify) {
+                const msgKey = `${twitchId}:${config.guildId}:${config.channelId}`;
+                const entry = liveMessages.get(msgKey);
+                if (entry && Date.now() - entry.lastUpdatedAt >= VIEWER_UPDATE_INTERVAL) {
+                  try { await entry.msg.edit({ embeds: [updatedEmbed] }); entry.lastUpdatedAt = Date.now(); } catch { liveMessages.delete(msgKey); }
+                }
+              }
+            }
           }
         }
       }
 
-      // Clean up users who are no longer live from the notified set
+      // Clean up users who are no longer live
       for (const twitchId of notifiedStreams) {
         if (!liveStreamsFound.has(twitchId)) {
-          //console.log(`${twitchId} is no longer live.`);
           notifiedStreams.delete(twitchId);
+          // Clean up stored messages for this streamer
+          for (const [key] of liveMessages) {
+            if (key.startsWith(`${twitchId}:`)) liveMessages.delete(key);
+          }
         }
       }
     };

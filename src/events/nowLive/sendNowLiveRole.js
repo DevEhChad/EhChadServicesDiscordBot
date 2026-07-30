@@ -55,7 +55,7 @@ module.exports = async (client) => {
     });
 
     // Startup scan: apply/remove roles for members already streaming when the bot starts.
-    client.once('ready', async () => {
+    client.once('clientReady', async () => {
         try {
             const roleConfigs = await NowLiveRoleSchema.find({});
             for (const roleData of roleConfigs) {

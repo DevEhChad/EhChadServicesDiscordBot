@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const KickUserSchema = require('../../schemas/KickUser');
 const KickNowLiveChannel = require('../../schemas/KickNowLiveChannel');
 const { Collection } = require('discord.js');
@@ -20,6 +20,43 @@ module.exports = async (client) => {
     console.log('🟢 Kick Live Notifier service started.');
     const { gotScraping } = await import('got-scraping');
     const notifiedStreams = new Map(); // Tracks notified streams: 'kickUsername' -> 'streamId'
+    const liveMessages = new Map();   // key: `${kickUsername}:${guildId}:${channelId}` -> { msg, lastUpdatedAt }
+    const VIEWER_UPDATE_INTERVAL = 5 * 60 * 1000; // Update viewer count every 5 minutes
+
+    const buildKickEmbed = (streamData) => {
+      const kickUsername = streamData.user.username;
+      const kickUrl = `https://kick.com/${kickUsername}`;
+
+      const rawThumbnail = streamData.livestream?.thumbnail?.src
+        || streamData.livestream?.thumbnail?.url
+        || streamData.thumbnail?.src
+        || streamData.thumbnail?.url
+        || null;
+
+      const imageUrl = rawThumbnail
+        ? rawThumbnail
+            .replace('{width}', '1280').replace('{height}', '720')
+            .replace('{w}', '1280').replace('{h}', '720')
+            .replace('{size}', '1280x720') + `?v=${Date.now()}`
+        : null;
+
+      const embed = new EmbedBuilder()
+        .setColor('#53FC18')
+        .setAuthor({ name: `${kickUsername} is now LIVE on Kick!`, iconURL: streamData.user.profile_pic, url: kickUrl })
+        .setTitle(streamData.livestream?.session_title || streamData.session_title || 'No title provided.')
+        .setURL(kickUrl)
+        .setThumbnail(streamData.user.profile_pic)
+        .setDescription(streamData.user.bio || 'No description provided.')
+        .addFields(
+          { name: 'Category', value: streamData.livestream?.categories[0]?.name || 'N/A', inline: true },
+          { name: 'Viewers', value: (streamData.livestream?.viewer_count ?? 0).toLocaleString(), inline: true }
+        )
+        .setTimestamp(streamData.livestream?.created_at ? new Date(streamData.livestream.created_at) : new Date())
+        .setFooter({ text: 'ehchadservices.com' });
+
+      if (imageUrl) embed.setImage(imageUrl);
+      return embed;
+    };
 
     const getStreamData = async (kickUsername) => {
       try {
@@ -52,118 +89,7 @@ module.exports = async (client) => {
         new ButtonBuilder().setLabel('Watch Stream').setURL(kickUrl).setStyle(ButtonStyle.Link)
       );
 
-      // Mirror Twitch embed layout but use Kick green color and attach the stream thumbnail so Discord displays it reliably.
-      const embed = new EmbedBuilder()
-        .setColor('#53FC18') // Kick green
-        .setAuthor({ name: `${kickUsername} is now LIVE on Kick!`, iconURL: streamData.user.profile_pic, url: kickUrl })
-        .setTitle(streamData.livestream?.session_title || streamData.session_title || 'No title provided.')
-        .setURL(kickUrl)
-        .setThumbnail(streamData.user.profile_pic)
-        .setDescription(streamData.user.bio || 'No description provided.')
-        .addFields(
-          { name: 'Category', value: streamData.livestream?.categories[0]?.name || 'N/A', inline: true },
-          { name: 'Viewers', value: (streamData.livestream?.viewer_count ?? 0).toString(), inline: true }
-        )
-  // We'll set the image below after attempting to fetch and attach the current thumbnail.
-        .setTimestamp(streamData.livestream?.created_at ? new Date(streamData.livestream.created_at) : new Date())
-        .setFooter({ text: 'ehchadservices.com' });
-
-      // Resolve a usable image URL from the Kick response (replace placeholders if present)
-      const rawThumbnail = streamData.livestream?.thumbnail?.url || streamData.thumbnail?.url || null;
-      let imageUrl = null;
-      if (rawThumbnail) {
-        imageUrl = rawThumbnail
-          .replace('{width}', '1280')
-          .replace('{height}', '720')
-          .replace('{w}', '1280')
-          .replace('{h}', '720')
-          .replace('{size}', '1280x720');
-      }
-
-  // resolved imageUrl is available if not null
-
-  // Attempt to fetch the image and attach it so Discord displays it reliably.
-      let files = [];
-      if (imageUrl) {
-          try {
-          // Use got-scraping (same lib used above) to retrieve the image with browser-like headers.
-          const imgRes = await gotScraping({
-            url: imageUrl,
-            responseType: 'buffer',
-            timeout: { request: 10000 },
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-              Referer: 'https://kick.com/',
-            },
-          });
-
-          let buffer = Buffer.from(imgRes.body || []);
-
-          // If gotScraping returned an empty buffer for some hosts, fall back to axios to try again
-          if (!buffer || buffer.length === 0) {
-            try {
-              console.warn(`[Kick] gotScraping returned empty image buffer for ${imageUrl}, falling back to axios.`);
-              const axiosRes = await axios.get(imageUrl, {
-                responseType: 'arraybuffer',
-                timeout: 10000,
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-                  Referer: 'https://kick.com/',
-                },
-              });
-              buffer = Buffer.from(axiosRes.data || []);
-            } catch (axErr) {
-              console.warn(`[Kick] axios fallback failed to fetch image ${imageUrl}:`, axErr?.message || axErr);
-              buffer = Buffer.alloc(0);
-            }
-
-            // If still empty and screenshot fallback is requested, try a quick headless screenshot of the stream page
-            if ((!buffer || buffer.length === 0) && process.env.KICK_USE_SCREENSHOT === 'true') {
-              try {
-                const playwright = await import('playwright');
-                const browser = await playwright.chromium.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
-                const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-                await page.goto(kickUrl, { waitUntil: 'networkidle', timeout: 15000 });
-                // slight delay to allow dynamic thumbnails to render
-                await page.waitForTimeout(1000);
-                const screenshotBuffer = await page.screenshot({ type: 'png', fullPage: false });
-                await browser.close();
-                if (screenshotBuffer && screenshotBuffer.length > 0) {
-                  buffer = Buffer.from(screenshotBuffer);
-                }
-              } catch (sErr) {
-                console.warn(`[Kick] Screenshot fallback failed for ${kickUrl}:`, sErr?.message || sErr);
-              }
-            }
-          }
-
-          // Try to infer an extension from content-type header
-          const contentType = (imgRes.headers && (imgRes.headers['content-type'] || imgRes.headers['Content-Type'])) || '';
-          let ext = 'jpg';
-          if (contentType.includes('png')) ext = 'png';
-          else if (contentType.includes('webp')) ext = 'webp';
-          else if (contentType.includes('gif')) ext = 'gif';
-
-          const fileName = `${kickUsername}-thumb.${ext}`;
-          // If the image is too large for Discord (8MB limit for attachments on many bots), fall back to URL
-          const maxSize = 8 * 1024 * 1024;
-          if (!buffer || buffer.length === 0) {
-            // No usable buffer; embed the remote URL as a fallback
-            if (imageUrl) embed.setImage(imageUrl);
-          } else if (buffer.length > maxSize) {
-            embed.setImage(imageUrl);
-          } else {
-            const attachment = new AttachmentBuilder(buffer, { name: fileName });
-            // Set the embed image to reference the attachment directly so Discord uses the attachment inside the embed
-            // This prevents the duplicate top-level file preview + embed image that occurs when editing after-send.
-            embed.setImage(`attachment://${fileName}`);
-            files.push(attachment);
-          }
-        } catch (err) {
-          // If fetching the image fails, fall back to embedding the remote URL (Discord will try to fetch it).
-          if (imageUrl) embed.setImage(imageUrl);
-        }
-      }
+      const embed = buildKickEmbed(streamData);
 
       for (const config of nowLiveChannels) {
         let channel = null;
@@ -188,9 +114,8 @@ module.exports = async (client) => {
                 embeds: [embed],
                 components: [row],
               };
-              if (files.length > 0) sendOptions.files = files;
-
               const sent = await channel.send(sendOptions);
+              liveMessages.set(`${kickUsername.toLowerCase()}:${config.guildId}:${config.channelId}`, { msg: sent, lastUpdatedAt: Date.now() });
             }
         } catch (error) {
           if (error.code === 10003) { // Unknown Channel
@@ -370,11 +295,18 @@ module.exports = async (client) => {
 
               if (existing) {
                 if (existing.streamId === streamId) {
-                  // Already notified for this guild + broadcaster; update lastSeen and skip
+                  // Same stream still live — update viewer count in existing message(s)
                   existing.lastSeenAt = new Date();
                   await existing.save();
-                  // Ensure in-memory dedupe is set to prevent any in-process duplicates
                   notifiedStreams.set(kickUsername.toLowerCase(), streamId);
+                  const updatedEmbed = buildKickEmbed(streamData);
+                  for (const ch of channelsToNotify) {
+                    const msgKey = `${kickUsername.toLowerCase()}:${guildId}:${ch.channelId}`;
+                    const entry = liveMessages.get(msgKey);
+                    if (entry && Date.now() - entry.lastUpdatedAt >= VIEWER_UPDATE_INTERVAL) {
+                      try { await entry.msg.edit({ embeds: [updatedEmbed] }); entry.lastUpdatedAt = Date.now(); } catch { liveMessages.delete(msgKey); }
+                    }
+                  }
                   continue;
                 }
 
@@ -461,7 +393,7 @@ module.exports = async (client) => {
           // --- Streamer is OFFLINE ---
           // This block now correctly handles both API failures (streamData is null)
           // and cases where the streamer is simply not live (streamData.livestream is null).
-          notifiedStreams.delete(username.toLowerCase()); // Remove from in-memory state
+          notifiedStreams.delete(username.toLowerCase());
           // Remove NotifiedStream entry for this broadcaster (they went offline) by broadcasterId or broadcasterName
           try {
             await NotifiedStream.deleteMany({ $or: [{ broadcasterId: username.toLowerCase() }, { broadcasterName: username }] });
@@ -469,8 +401,11 @@ module.exports = async (client) => {
             console.error(`[Kick] Failed to delete NotifiedStream entries for ${username}:`, err);
           }
 
-          // Clear in-memory dedupe and reset lastStreamId for tracked KickUser entries
+          // Clear in-memory state and stored messages for this streamer
           notifiedStreams.delete(username.toLowerCase());
+          for (const [key] of liveMessages) {
+            if (key.startsWith(`${username.toLowerCase()}:`)) liveMessages.delete(key);
+          }
           for (const userEntry of userEntries) {
             if (userEntry.lastStreamId) {
               await KickUserSchema.updateOne({ _id: userEntry._id }, { lastStreamId: null });

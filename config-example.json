@@ -1,6 +1,7 @@
 {
-    "mainServer": "Server_ID",
-    "clientId": "BOT_ID",
-    "devs": ["Your_ID_OR_Dev_ID"],
-    "disableKickNotifier": false
+    "mainServer": "YOUR_SERVER_ID",
+    "clientId": "YOUR_BOT_CLIENT_ID",
+    "devs": ["YOUR_DISCORD_USER_ID"],
+    "disableKickNotifier": false,
+    "statusChannelId": ""
 }

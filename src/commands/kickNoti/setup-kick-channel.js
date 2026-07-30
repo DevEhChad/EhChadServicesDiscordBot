@@ -56,20 +56,21 @@ module.exports = {
             const targetChannel = interaction.channelId;
             const customMessage = interaction.options.getString('message') || null;
             await interaction.deferReply({ ephemeral: true });
-            const newKickNowLiveChannel = new KickNowLiveChannel({
-                guildId: interaction.guildId,
-                channelId: targetChannel,
-                customMessage,
-            });
-            await newKickNowLiveChannel.save();
+
+            await KickNowLiveChannel.findOneAndUpdate(
+                { guildId: interaction.guildId },
+                { guildId: interaction.guildId, channelId: targetChannel, customMessage },
+                { upsert: true, new: true }
+            );
+
             if (customMessage) {
                 interaction.followUp({
-                    content: `Configured <#${targetChannel}> to receive Kick notifications with a custom message: "**${customMessage}**"`,
+                    content: `✅ Configured <#${targetChannel}> to receive Kick notifications with a custom message: "**${customMessage}**"`,
                     ephemeral: true
                 });
             } else {
                 interaction.followUp({
-                    content: `Configured <#${targetChannel}> to receive Kick notifications with the default message.`,
+                    content: `✅ Configured <#${targetChannel}> to receive Kick notifications with the default message.`,
                     ephemeral: true
                 });
             }
