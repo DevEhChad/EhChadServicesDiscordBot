@@ -10,6 +10,7 @@ module.exports = {
 
     try {
       const kickUsername = interaction.options.getString('kick-username').toLowerCase();
+      const discordUser = interaction.options.getUser('discord-user');
 
       await interaction.deferReply({ ephemeral: true });
 
@@ -18,21 +19,34 @@ module.exports = {
         kickUsername: kickUsername,
       };
 
-      const kickUserExists = await KickUserSchema.findOne(query);
+      const existingUser = await KickUserSchema.findOne(query);
 
-      if (kickUserExists) {
-        interaction.followUp({
-          content: `User "${kickUsername}" has already been added for this server.`,
-          ephemeral: true,
-        });
+      if (existingUser) {
+        if (discordUser) {
+          existingUser.discordUserId = discordUser.id;
+          await existingUser.save();
+          interaction.followUp({
+            content: `Updated "${kickUsername}" — linked to ${discordUser} for live role assignment.`,
+            ephemeral: true,
+          });
+        } else {
+          interaction.followUp({
+            content: `User "${kickUsername}" has already been added for this server.`,
+            ephemeral: true,
+          });
+        }
         return;
       }
 
-      const newKickUser = new KickUserSchema(query);
+      const newKickUser = new KickUserSchema({
+        ...query,
+        discordUserId: discordUser?.id ?? null,
+      });
       await newKickUser.save();
 
+      const linked = discordUser ? ` and linked to ${discordUser} for live role assignment` : '';
       interaction.followUp({
-        content: `Successfully added "${kickUsername}" to the Kick notification list.`,
+        content: `Successfully added "${kickUsername}" to the Kick notification list${linked}.`,
         ephemeral: true,
       });
     } catch (error) {
@@ -52,6 +66,12 @@ module.exports = {
             description: 'Add a Kick User by username. **Not a link**',
             type: ApplicationCommandOptionType.String,
             required: true
+        },
+        {
+            name: 'discord-user',
+            description: 'Link a Discord member to this Kick user so they get the Now Live role.',
+            type: ApplicationCommandOptionType.User,
+            required: false
         }
     ],
     permissionsRequired: [PermissionFlagsBits.Administrator],

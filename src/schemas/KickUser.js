@@ -9,6 +9,10 @@ const kickUserSchema = new Schema({
       type: String,
       required: true,
     },
+    discordUserId: {
+      type: String,
+      default: null,
+    },
   },
   { 
     timestamps: true,

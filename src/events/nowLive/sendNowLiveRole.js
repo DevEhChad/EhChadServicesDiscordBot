@@ -1,92 +1,148 @@
-const { Client, GuildMemberRoleManager } = require('discord.js');
+const { ActivityType } = require('discord.js');
 const NowLiveRoleSchema = require('../../schemas/NowLiveRole');
-const NowLiveSchema = require("../../schemas/NowLiveChannel");
-const TwitchUserSchema = require("../../schemas/TwitchUser");
-require("dotenv").config();
-const twitchClientID = process.env.TWITCH_CLIENT_ID;
-const twitchSecretID = process.env.TWITCH_CLIENT_SECRET;
+const KickUserSchema = require('../../schemas/KickUser');
 
 module.exports = async (client) => {
-    const checkTwitchStatus = async () => {
-        try {
-            const guilds = await NowLiveRoleSchema.find({});
+    // ─────────────────────────────────────────────────────────────────────────
+    // TWITCH — Discord presence detection
+    // When a user links their Twitch account to Discord and goes live, Discord
+    // automatically fires a presenceUpdate with a Streaming activity.
+    // No Twitch API calls or per-user Twitch↔Discord mapping needed.
+    // Requires: GuildPresences privileged intent (already enabled in main.js).
+    // ─────────────────────────────────────────────────────────────────────────
 
-            for (const guildData of guilds) {
-                const guildId = guildData.guildId;
-                const guild = client.guilds.cache.get(guildId);
+    client.on('presenceUpdate', async (oldPresence, newPresence) => {
+        try {
+            if (!newPresence?.member || !newPresence?.guild) return;
+
+            const hadTwitchStream = oldPresence?.activities?.some(
+                a => a.type === ActivityType.Streaming && a.url?.toLowerCase().includes('twitch.tv')
+            ) ?? false;
+
+            const hasTwitchStream = newPresence.activities?.some(
+                a => a.type === ActivityType.Streaming && a.url?.toLowerCase().includes('twitch.tv')
+            ) ?? false;
+
+            // Only act when Twitch streaming status actually changed
+            if (hadTwitchStream === hasTwitchStream) return;
+
+            const guild = newPresence.guild;
+            const member = newPresence.member;
+
+            const roleData = await NowLiveRoleSchema.findOne({ guildId: guild.id });
+            if (!roleData || !roleData.enabled) return;
+
+            const role = guild.roles.cache.get(roleData.nowLiveRoleId);
+            if (!role) return;
+
+            if (hasTwitchStream) {
+                if (!member.roles.cache.has(role.id)) {
+                    await member.roles.add(role);
+                    console.log(`[NowLive] Added role to ${member.user.tag} (Twitch live) in ${guild.name}`);
+                }
+            } else {
+                // Before removing, check if this member is a tracked Kick streamer.
+                // If they are, the Kick poller will handle their role — don't interfere.
+                const isKickStreamer = await KickUserSchema.findOne({ guildId: guild.id, discordUserId: member.id });
+                if (!isKickStreamer && member.roles.cache.has(role.id)) {
+                    await member.roles.remove(role);
+                    console.log(`[NowLive] Removed role from ${member.user.tag} (Twitch ended) in ${guild.name}`);
+                }
+            }
+        } catch (error) {
+            console.error('[NowLive] presenceUpdate error:', error);
+        }
+    });
+
+    // Startup scan: apply/remove roles for members already streaming when the bot starts.
+    client.once('ready', async () => {
+        try {
+            const roleConfigs = await NowLiveRoleSchema.find({});
+            for (const roleData of roleConfigs) {
+                const guild = client.guilds.cache.get(roleData.guildId);
                 if (!guild) continue;
 
-                const nowLiveRoleId = guildData.nowLiveRoleId;
-                const nowLiveRole = guild.roles.cache.get(nowLiveRoleId);
-                if (!nowLiveRole) continue;
+                const role = guild.roles.cache.get(roleData.nowLiveRoleId);
+                if (!role) continue;
 
-                const twitchUsers = await TwitchUserSchema.find({ guildId });
+                for (const [, member] of guild.members.cache) {
+                    const isTwitchStreaming = member.presence?.activities?.some(
+                        a => a.type === ActivityType.Streaming && a.url?.toLowerCase().includes('twitch.tv')
+                    ) ?? false;
 
-                for (const twitchUserData of twitchUsers) {
-                    const twitchUsername = twitchUserData.twitchUsername;
-                    const member = guild.members.cache.get(twitchUserData.userId);
+                    if (isTwitchStreaming && !member.roles.cache.has(role.id)) {
+                        await member.roles.add(role).catch(err =>
+                            console.error(`[NowLive] Startup: failed to add role to ${member.user.tag}:`, err)
+                        );
+                    }
+                }
+            }
+            console.log('[NowLive] Twitch presence startup scan complete.');
+        } catch (error) {
+            console.error('[NowLive] Startup scan error:', error);
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // KICK — API polling (Discord has no native Kick integration)
+    // Checks every 2 minutes. Only processes Kick users with a linked discordUserId
+    // (set via /add-kick-user kick-username:foo discord-user:@member).
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const checkKickStatus = async () => {
+        try {
+            const { gotScraping } = await import('got-scraping');
+            const roleConfigs = await NowLiveRoleSchema.find({});
+
+            for (const roleData of roleConfigs) {
+                const guild = client.guilds.cache.get(roleData.guildId);
+                if (!guild) continue;
+
+                if (!roleData.enabled) continue;
+
+                const role = guild.roles.cache.get(roleData.nowLiveRoleId);
+                if (!role) continue;
+
+                const kickUsers = await KickUserSchema.find({
+                    guildId: roleData.guildId,
+                    discordUserId: { $exists: true, $ne: null },
+                });
+
+                for (const kickUserData of kickUsers) {
+                    const member = guild.members.cache.get(kickUserData.discordUserId);
                     if (!member) continue;
 
                     try {
-                        // Dynamic import for node-fetch
-                        const fetch = (await import('node-fetch')).default; 
-
-                        const tokenResponse = await fetch('https://id.twitch.tv/oauth2/token', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            },
-                            body: new URLSearchParams({
-                                client_id: twitchClientID,
-                                client_secret: twitchSecretID,
-                                grant_type: 'client_credentials'
-                            })
-                        });
-                        const tokenData = await tokenResponse.json();
-                        if (!tokenData.access_token) return console.log('No access token provided');
-
-                        const twitchResponse = await fetch(`https://api.twitch.tv/helix/streams?user_login=${twitchUsername}`, {
-                            headers: {
-                                'Client-ID': twitchClientID,
-                                'Authorization': `Bearer ${tokenData.access_token}`
-                            }
+                        const response = await gotScraping({
+                            url: `https://kick.com/api/v2/channels/${kickUserData.kickUsername}`,
+                            responseType: 'json',
+                            timeout: { request: 10000 },
                         });
 
-                        if (!twitchResponse.ok) {
-                            console.error(`Twitch API Error: ${twitchResponse.status} ${twitchResponse.statusText}`);
-                            continue;
-                        }
+                        const isLive = !!(response.body?.livestream);
 
-                        const twitchData = await twitchResponse.json();
-
-                        if (twitchData.data.length > 0) {
-                            if (!member.roles.cache.has(nowLiveRoleId)) {
-                                try {
-                                    await member.roles.add(nowLiveRole);
-                                    console.log(`Added Now Live role to ${member.user.tag} in ${guild.name}`);
-                                } catch (error) {
-                                    console.error(`Error adding role to ${member.user.tag}:`, error);
-                                }
-                            }
-                        } else {
-                            if (member.roles.cache.has(nowLiveRoleId)) {
-                                try {
-                                    await member.roles.remove(nowLiveRole);
-                                    console.log(`Removed Now Live role from ${member.user.tag} in ${guild.name}`);
-                                } catch (error) {
-                                    console.error(`Error removing role from ${member.user.tag}:`, error);
-                                }
+                        if (isLive && !member.roles.cache.has(role.id)) {
+                            await member.roles.add(role);
+                            console.log(`[NowLive] Added role to ${member.user.tag} (Kick live) in ${guild.name}`);
+                        } else if (!isLive && member.roles.cache.has(role.id)) {
+                            // Only remove if they're not currently streaming on Twitch
+                            const isTwitchStreaming = member.presence?.activities?.some(
+                                a => a.type === ActivityType.Streaming && a.url?.toLowerCase().includes('twitch.tv')
+                            ) ?? false;
+                            if (!isTwitchStreaming) {
+                                await member.roles.remove(role);
+                                console.log(`[NowLive] Removed role from ${member.user.tag} (Kick ended) in ${guild.name}`);
                             }
                         }
                     } catch (error) {
-                        console.error("Error checking Twitch status:", error);
+                        console.error(`[NowLive] Kick API error for ${kickUserData.kickUsername}:`, error.message);
                     }
                 }
             }
         } catch (error) {
-            console.error("Error checking Twitch status:", error);
+            console.error('[NowLive] Kick polling error:', error);
         }
     };
 
-    setInterval(checkTwitchStatus, 2 * 60 * 1000);
+    setInterval(checkKickStatus, 2 * 60 * 1000);
 };
