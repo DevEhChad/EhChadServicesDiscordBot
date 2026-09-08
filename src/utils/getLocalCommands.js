@@ -21,11 +21,7 @@ module.exports = (exceptions = []) => {
       try {
         if (commandObject && commandObject.data && typeof commandObject.data.toJSON === 'function') {
           const json = commandObject.data.toJSON();
-          normalized = Object.assign({}, commandObject, {
-            name: json.name,
-            description: json.description,
-            options: json.options,
-          });
+          normalized = Object.assign({}, commandObject, json);
         }
       } catch (err) {
         // If normalization fails, fall back to original object

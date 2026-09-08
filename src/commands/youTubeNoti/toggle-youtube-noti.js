@@ -1,14 +1,14 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
-  deleted: true,
   data: new SlashCommandBuilder()
     .setName('toggle-youtube-noti')
     .setDescription('Enable or disable YouTube upload notifications for this server')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
     .addBooleanOption(opt => opt.setName('enabled').setDescription('Enable or disable').setRequired(true)),
   async execute(interaction) {
-    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', ephemeral: true });
+    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', flags: MessageFlags.Ephemeral });
     const enabled = interaction.options.getBoolean('enabled');
     const guildId = interaction.guild.id;
 
@@ -20,6 +20,6 @@ module.exports = {
     }
 
     await doc.save();
-    return interaction.reply({ content: `YouTube notifications are now ${enabled ? 'enabled' : 'disabled'} for this server.`, ephemeral: true });
+    return interaction.reply({ content: `✅ YouTube upload notifications are now **${enabled ? 'enabled' : 'disabled'}** for this server.`, flags: MessageFlags.Ephemeral });
   }
 };

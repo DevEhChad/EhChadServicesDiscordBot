@@ -1,70 +1,75 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const leaveChannelSchema = require('../../schemas/LeaveChannel');
 
 module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('setup-leave-channel')
+        .setDescription('Setup a channel to send the leave messages to.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+        .addChannelOption((opt) =>
+            opt
+                .setName('target-channel')
+                .setDescription('The channel to get leave messages in.')
+                .setRequired(true)
+        )
+        .addStringOption((opt) =>
+            opt
+                .setName('custom-message')
+                .setDescription('TEMPLATES:{mention-member} {username} {server-name} {user-tag} <@{user-tag}>, "The leave Message"')
+        ),
 
-    /** 
-     * 
-     * @param {Client} client
-     * @param {Interaction} interaction
-     */
+    async execute(interaction) {
 
-    callback: async (client, interaction,) => {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
         try {
             const targetChannel = interaction.options.getChannel('target-channel');
-            const customMessage = interaction.options.getString('custom-message');
+            const customMessage = interaction.options.getString('custom-message') ?? null;
 
-            await interaction.deferReply({ ephemeral: true }); // Corrected spelling of 'ephemeral'
+            if (!targetChannel) {
+                await interaction.followUp({ content: 'Please provide a valid channel.', flags: MessageFlags.Ephemeral });
+                return;
+            }
+
+            // Ensure channel is a text-based channel we can send messages to
+            if (typeof targetChannel.isTextBased === 'function' && !targetChannel.isTextBased()) {
+                await interaction.followUp({ content: 'The selected channel is not a text channel.', flags: MessageFlags.Ephemeral });
+                return;
+            }
+
+            // Check bot permissions in the target channel
+            const me = interaction.guild?.members?.me || (await interaction.guild.members.fetchMe?.());
+            const botPerms = targetChannel.permissionsFor(me);
+            if (!botPerms || !botPerms.has(['ViewChannel', 'SendMessages'])) {
+                await interaction.followUp({ content: 'I do not have permission to send messages in that channel. Please adjust permissions and try again.', flags: MessageFlags.Ephemeral });
+                return;
+            }
 
             const query = {
                 guildId: interaction.guildId,
                 channelId: targetChannel.id,
             };
 
-            const channelExistInDb = await leaveChannelSchema.exists(query);
+            // Upsert the leave channel atomically to avoid duplicate-key races
+            const update = { customMessage };
+            const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
 
-            if (channelExistInDb) {
-                interaction.followUp({ content: 'This channel has already been configured for leave messages.', ephemeral: true }); // Ephemeral added
-                return;
-            }
+            await leaveChannelSchema.findOneAndUpdate(query, update, opts);
 
-            const newLeaveChannel = new leaveChannelSchema({
-                ...query,
-                customMessage,
-            });
-
-            newLeaveChannel
-                .save()
-                .then(() => {
-                    interaction.followUp({ content: `Configured ${targetChannel} to receive leave messages.`, ephemeral: true }); // Ephemeral added
-                })
-                .catch((error) => {
-                    interaction.followUp({ content: 'Database Error. Please try again in a moment.', ephemeral: true }); // Ephemeral added
-                    console.log(`DB error in ${__filename}:\n`, error); // Corrected error variable name
-                });
+            await interaction.followUp({ content: `Configured ${targetChannel} to receive leave messages.`, flags: MessageFlags.Ephemeral });
             return;
 
         } catch (error) {
-            console.log('Error', error);
+            console.log(`Error in ${__filename}:`, error);
+            try {
+                await interaction.followUp({ content: 'An unexpected error occurred. Please try again later.', flags: MessageFlags.Ephemeral });
+            } catch (e) {
+                // ignore follow-up errors
+            }
+            return;
         }
-        return;
     },
 
-    name: 'setup-leave-channel',
-    description: 'Setup a channel to send the leave messages to.',
-    options: [
-        {
-            name: 'target-channel',
-            description: 'The channel to get leave messages in.',
-            type: ApplicationCommandOptionType.Channel,
-            required: true
-        },
-        {
-            name: 'custom-message',
-            description: 'TEMPLATES:{mention-member} {username} {server-name} {user-tag} <@{user-tag}>, "The leave Message"',
-            type: ApplicationCommandOptionType.String,
-        },
-    ],
     permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],
 };

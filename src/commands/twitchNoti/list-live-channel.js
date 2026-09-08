@@ -1,18 +1,19 @@
-const { Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const NowLiveSchema = require('../../schemas/NowLiveChannel');
 
 module.exports = {
-  /**
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  callback: async (client, interaction) => {
-    await interaction.deferReply({ ephemeral: true });
+  data: new SlashCommandBuilder()
+    .setName('list-live-channel')
+    .setDescription('Lists all channels configured to receive live notifications.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  async execute(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const liveChannels = await NowLiveSchema.find({ guildId: interaction.guildId });
 
     if (liveChannels.length === 0) {
-      await interaction.followUp({ content: 'There are no channels configured for live notifications in this server.', ephemeral: true });
+      await interaction.followUp({ content: 'There are no channels configured for live notifications in this server.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -31,12 +32,9 @@ module.exports = {
       .setColor('#6441A5') // Twitch purple for consistency
       .setTimestamp();
 
-    await interaction.followUp({ embeds: [embed], ephemeral: true });
+    await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
   },
 
-  name: 'list-live-channel',
-  description: 'Lists all channels configured to receive live notifications.',
-  options: [],
   permissionsRequired: [PermissionFlagsBits.Administrator],
   botPermissions: [],
 };

@@ -9,7 +9,6 @@ const welcomeChannelSchema = new Schema(
     channelId: {
         type: String,
         required: true,
-        unique: true,
     },
     customMessage: {
         type: String,
@@ -18,5 +17,8 @@ const welcomeChannelSchema = new Schema(
 },
 { timestamps: true }
 );
+
+// Ensure uniqueness per guild + channel combination
+welcomeChannelSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
 module.exports = model('WelcomeChannel', welcomeChannelSchema);

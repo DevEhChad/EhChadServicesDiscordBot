@@ -1,25 +1,25 @@
-const {
-    ApplicationCommandOptionType,
-    Client,
-    Interaction,
-    PermissionFlagsBits
-} = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 const YouTubeUserSchema = require('../../schemas/YouTubeUser');
 
 module.exports = {
 
-    /** 
-     * 
-     * @param {Client} client
-     * @param {Interaction} interaction
-     */
+    data: new SlashCommandBuilder()
+        .setName('remove-youtube-user')
+        .setDescription('Removes a YouTube user from the YouTube user list.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addStringOption((option) =>
+            option
+                .setName('youtube-user')
+                .setDescription('The user to remove.')
+                .setRequired(true)
+        ),
 
-    callback: async (client, interaction,) => {
+    async execute(interaction) {
         try {
             const YouTubeUser = interaction.options.getString('youtube-user');
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const query = {
                 guildId: interaction.guildId,
@@ -30,16 +30,16 @@ module.exports = {
             const youtubeUserExistInDb = await YouTubeUserSchema.exists(query);
 
             if (!youtubeUserExistInDb) {
-                interaction.followUp({ content: `That user hasn't been added to the YouTube users list.`, ephemeral: true });
+                interaction.followUp({ content: `That user hasn't been added to the YouTube users list.`, flags: MessageFlags.Ephemeral });
                 return;
             }
 
             YouTubeUserSchema.findOneAndDelete(query)
                 .then(() => {
-                    interaction.followUp({ content: `Removed ${YouTubeUser} from the YouTube Users list.`, ephemeral: true });
+                    interaction.followUp({ content: `Removed ${YouTubeUser} from the YouTube Users list.`, flags: MessageFlags.Ephemeral });
                 })
                 .catch((error) => {
-                    interaction.followUp({ content: 'Database error. Please try again in a moment.', ephemeral: true });
+                    interaction.followUp({ content: 'Database error. Please try again in a moment.', flags: MessageFlags.Ephemeral });
                     console.log(`DB error in ${__filename}:\n`, error);
                 })
             return;
@@ -49,16 +49,6 @@ module.exports = {
         return;
     },
     deleted: true,
-    name: 'remove-youtube-user',
-    description: 'Removes a YouTube user from the YouTube user list.',
-    options: [
-        {
-            name: 'youtube-user',
-            description: 'The user to remove.',
-            type: ApplicationCommandOptionType.String,
-            required: true,
-        }
-    ],
     permissionsRequired: [PermissionFlagsBits.Administrator],
     botPermissions: [PermissionFlagsBits.ManageChannels],
 

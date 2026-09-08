@@ -1,17 +1,16 @@
 const {
-  Client,
-  Interaction,
+  SlashCommandBuilder,
   EmbedBuilder,
+  MessageFlags,
 } = require('discord.js');
 
-/**
- * @param {Client} client
- * @param {Interaction} interaction
- */
-
 module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('ehbrocord-invite')
+    .setDescription('Will send Eh BroCords discords perma invite link.'),
 
-  callback: async (client, interaction) => {
+  //devOnly: true,
+  async execute(interaction) {
     try {
 
       const invite = "https://discord.gg/EAqNqWjJMQ";
@@ -23,20 +22,15 @@ module.exports = {
         .setURL(invite);
 
       await interaction.user.send({ embeds: [embed], content: invite });
-      await interaction.reply({ content: "Check your DMs!", ephemeral: true });
+      await interaction.reply({ content: "Check your DMs!", flags: MessageFlags.Ephemeral });
 
     } catch (error) {
       console.log('error', error);
       if (error.code === 50007) {
-        await interaction.reply({ content: "I can't DM you. Please enable DMs from server members.", ephemeral: true });
+        await interaction.reply({ content: "I can't DM you. Please enable DMs from server members.", flags: MessageFlags.Ephemeral });
       } else {
-        await interaction.reply({ content: "Something went wrong.", ephemeral: true });
+        await interaction.reply({ content: "Something went wrong.", flags: MessageFlags.Ephemeral });
       }
     } return;
   },
-
-  
-  //devOnly: true,
-  name: 'ehbrocord-invite',
-  description: 'Will send Eh BroCords discords perma invite link.',
 };

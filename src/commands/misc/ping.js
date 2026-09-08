@@ -1,7 +1,11 @@
-const { ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, ButtonComponent, Client, Interaction } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
-  callback: async (client, interaction) => {
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Replies with the bot ping!'),
+
+  async execute(interaction) {
 
     function getRandomColor() {
       const letters = '0123456789ABCDEF';
@@ -12,7 +16,7 @@ module.exports = {
       return color;
     }
 
-    await interaction.deferReply({ ephemeral: true }); // Ephemeral added here
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral }); // Ephemeral added here
 
     const reply = await interaction.fetchReply();
 
@@ -21,11 +25,10 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(getRandomColor())
       .setTitle("Pong!")
-      .setDescription(`Ping is ${ping}ms | Websocket: ${client.ws.ping}ms`);
+      .setDescription(`Ping is ${ping}ms | Websocket: ${interaction.client.ws.ping}ms`);
 
     await interaction.editReply({
       embeds: [embed],
-      ephemeral: true // Ephemeral added here 
     });
 
     setTimeout(async () => {
@@ -36,8 +39,4 @@ module.exports = {
       }
     }, 10000); // 10000 milliseconds = 10 seconds
   },
-
-  name: 'ping',
-  description: 'Replies with the bot ping!',
-
 };

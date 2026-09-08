@@ -1,16 +1,21 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const TwitchUserSchema = require('../../schemas/TwitchUser');
 
 module.exports = {
-  /**
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  callback: async (client, interaction) => {
+  data: new SlashCommandBuilder()
+    .setName('add-twitch-user')
+    .setDescription('Add Twitch User to get live notifications from.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addStringOption(opt =>
+      opt.setName('twitch-user')
+        .setDescription('Add a Twitch User by username. **Not a link**')
+        .setRequired(true)),
+
+  async execute(interaction) {
     try {
       const twitchUsername = interaction.options.getString('twitch-user').toLowerCase();
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const query = {
         guildId: interaction.guildId,
@@ -22,7 +27,7 @@ module.exports = {
       if (twitchUserExists) {
         interaction.followUp({
           content: `User "${twitchUsername}" has already been added for this server.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -32,28 +37,17 @@ module.exports = {
 
       interaction.followUp({
         content: `Successfully added "${twitchUsername}" to the Twitch notification list.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
       console.log(`Error in ${__filename}:\n`, error);
       interaction.followUp({
         content: 'A database error occurred. Please try again.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },
 
-    name: 'add-twitch-user',
-    description: 'Add Twitch User to get live notifications from.',
-    options: [
-        {
-            name: 'twitch-user',
-            description: 'Add a Twitch User by username. **Not a link**',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }
-    ],
-    permissionsRequired: [PermissionFlagsBits.Administrator],
-    botPermissions: [PermissionFlagsBits.ManageRoles],
-
+  permissionsRequired: [PermissionFlagsBits.Administrator],
+  botPermissions: [PermissionFlagsBits.ManageRoles],
 };

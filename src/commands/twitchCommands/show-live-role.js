@@ -1,36 +1,24 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const NowLiveRoleSchema = require('../../schemas/NowLiveRole');
 
 module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('show-live-role')
+    .setDescription('Tells you the current now live role.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
-    /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+  async execute(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    callback: async (client, interaction) => {
-        // Query all Twitch users associated with the guild
-        const liveRole = await NowLiveRoleSchema.find();
+    const liveRole = await NowLiveRoleSchema.findOne({ guildId: interaction.guildId });
 
-        await interaction.deferReply({ ephemeral: true });
+    if (!liveRole) {
+      await interaction.followUp({ content: 'No Now Live role has been configured for this server.', flags: MessageFlags.Ephemeral });
+      return;
+    }
 
-        if (liveRole.length === 0) {
-            await interaction.followUp({ content: "Live Role Currently Disabled", ephermal: true });
-            return;
-        }
-
-        // Collect all URLs with usernames and join them with newlines
-        const liveRoleInfo = liveRole.map(role => `\`${NowLiveRoleSchema.nowLiveRoleId} :\` <@${NowLiveRoleSchema.nowLiveRoleId}>`).join('\n\n');
-        const roleID = liveRole.nowLiveRoleId;
-
-        await interaction.followUp({ content: `**Now Live Role Is:**\n\n${liveRoleInfo}`, ephermal: true });
-    },
-    deleted: true,
-    devOnly: true,
-    name: 'show-live-role',
-    description: 'Tells you the current now live role.',
-    options: [],
-    permissionsRequired: [PermissionFlagsBits.ManageChannels],
-    botPermissions: [PermissionFlagsBits.ManageChannels],
+    await interaction.followUp({ content: `**Now Live Role:** <@&${liveRole.nowLiveRoleId}>`, flags: MessageFlags.Ephemeral });
+  },
+  permissionsRequired: [PermissionFlagsBits.ManageChannels],
+  botPermissions: [PermissionFlagsBits.ManageChannels],
 };

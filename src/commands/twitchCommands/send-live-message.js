@@ -1,29 +1,23 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
-const sendNowLiveMessage = require("../../events/nowLive/sendNowLiveMessage");
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('send-live-message')
+    .setDescription('Will send the live message.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
-  /** 
-   * 
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-
-  callback: async (client, interaction) => {
+  async execute(interaction) {
     try {
       // This command is problematic as it re-initializes the interval loop.
       // The check runs automatically every 15 seconds.
       // A manual trigger isn't necessary and can cause issues.
-      interaction.reply({ content: `The live-check runs automatically every 15 seconds. A manual trigger is no longer needed.`, ephemeral: true });
+      interaction.reply({ content: `The live-check runs automatically every 15 seconds. A manual trigger is no longer needed.`, flags: MessageFlags.Ephemeral });
     } catch (error) {
       console.log(error);
     }
   },
   //deleted: true,
   devOnly: true,
-  name: 'send-live-message',
-  description: 'Will send the live message.',
-  options: [],
   permissionsRequired: [PermissionFlagsBits.ManageChannels],
   botPermissions: [PermissionFlagsBits.ManageChannels],
 };

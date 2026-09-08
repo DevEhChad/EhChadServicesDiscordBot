@@ -3,19 +3,10 @@ const mongoose = require('mongoose');
 const eventHandler = require('./handlers/eventHandler');
 const sendNowLiveMessage = require("./events/nowLive/sendNowLiveMessage");
 const sendNowLiveRole = require("./events/nowLive/sendNowLiveRole");
-const axios = require('axios');
-const app = require('express');
 
 const {
-    REST,
-    Routes,
     Client,
-    Intents,
     IntentsBitField,
-    ButtonBuilder,
-    ButtonStyle,
-    ActionRowBuilder,
-    ComponentType,
 } = require('discord.js');
 const NowLiveChannel = require("./schemas/NowLiveChannel");
 const sendKickLiveMessage = require("./events/nowLive/sendKickLiveMessage");
@@ -72,6 +63,9 @@ client.on('messageCreate', (message) => {
     // YouTube upload notifier
     const sendYouTubeUploadNoti = require('./events/youTube/sendYouTubeUploadNoti');
     sendYouTubeUploadNoti(client);
+    // YouTube live stream notifier
+    const sendYouTubeLiveNoti = require('./events/youTube/sendYouTubeLiveNoti');
+    sendYouTubeLiveNoti(client);
         sendNowLiveRole(client); // Initialize the live role service
 
         await client.login(process.env.TOKEN);

@@ -1,14 +1,30 @@
-const { Client, Interaction, ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const ms = require('ms');
 
 module.exports = {
-  /**
-   *
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
+  data: new SlashCommandBuilder()
+    .setName('timeout')
+    .setDescription('Timeout a user.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.MuteMembers)
+    .addMentionableOption((option) =>
+      option
+        .setName('target-user')
+        .setDescription('The user you want to timeout.')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('duration')
+        .setDescription('Timeout duration (30m, 1h, 1 day).')
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('reason')
+        .setDescription('The reason for the timeout.')
+    ),
 
-  callback: async (client, interaction) => {
+  async execute(interaction) {
     const mentionable = interaction.options.get('target-user').value;
     const duration = interaction.options.get('duration').value; // 1d, 1 day, 1s 5s, 5m
     const reason = interaction.options.get('reason')?.value || 'No reason provided';
@@ -67,27 +83,6 @@ module.exports = {
       console.log(`There was an error when timing out: ${error}`);
     }
   },
-  name: 'timeout',
-  description: 'Timeout a user.',
-  options: [
-    {
-      name: 'target-user',
-      description: 'The user you want to timeout.',
-      type: ApplicationCommandOptionType.Mentionable,
-      required: true,
-    },
-    {
-      name: 'duration',
-      description: 'Timeout duration (30m, 1h, 1 day).',
-      type: ApplicationCommandOptionType.String,
-      required: true,
-    },
-    {
-      name: 'reason',
-      description: 'The reason for the timeout.',
-      type: ApplicationCommandOptionType.String,
-    },
-  ],
   permissionsRequired: [PermissionFlagsBits.MuteMembers],
   botPermissions: [PermissionFlagsBits.MuteMembers],
 };

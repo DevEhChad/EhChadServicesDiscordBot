@@ -1,4 +1,6 @@
-const { Events, ActionRowBuilder, ButtonBuilder } = require('discord.js');
+const {
+  Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags,
+} = require('discord.js');
 const { devs, mainServer } = require('../../../config.json');
 const getLocalCommands = require('../../utils/getLocalCommands');
 const Toggle = require('../../schemas/Toggle');
@@ -11,7 +13,7 @@ module.exports = {
       if (interaction.customId === 'manage-toggle-select') {
         // Only allow devs
         if (!devs.includes(interaction.user.id)) {
-          return interaction.reply({ content: 'Only developers can manage toggles.', ephemeral: true });
+          return interaction.reply({ content: 'Only developers can manage toggles.', flags: MessageFlags.Ephemeral });
         }
 
         const value = interaction.values[0]; // e.g. 'command:bind-youtube-channel' or 'service:kick-notifier'
@@ -37,7 +39,7 @@ module.exports = {
           components.push(row);
         }
 
-        return interaction.update({ content: `${key} — ${enabled ? 'enabled' : 'disabled'}${devOnly ? ' • dev-only' : ''}`, components, ephemeral: true });
+        return interaction.update({ content: `${key} — ${enabled ? 'enabled' : 'disabled'}${devOnly ? ' • dev-only' : ''}`, components });
       }
     }
 
@@ -54,7 +56,7 @@ module.exports = {
 
         // Only allow devs to toggle
         if (!devs.includes(interaction.user.id)) {
-          return interaction.reply({ content: 'Only developers can toggle commands/services.', ephemeral: true });
+          return interaction.reply({ content: 'Only developers can toggle commands/services.', flags: MessageFlags.Ephemeral });
         }
 
           if (action === 'toggle') {
@@ -88,14 +90,14 @@ module.exports = {
     // Check command/service toggles
     const globalToggle = await Toggle.findOne({ key: commandObject.name, type: 'command', guildId: null });
     if (globalToggle && globalToggle.enabled === false) {
-      return interaction.reply({ content: 'This command has been disabled by the bot owner.', ephemeral: true });
+      return interaction.reply({ content: 'This command has been disabled by the bot owner.', flags: MessageFlags.Ephemeral });
     }
 
     // devOnly can be set via Toggle or command definition
     const devToggle = await Toggle.findOne({ key: commandObject.name, type: 'command', guildId: null });
     const isDevOnly = (devToggle && devToggle.devOnly) || commandObject.devOnly;
     if (isDevOnly && !devs.includes(interaction.user.id)) {
-      return interaction.reply({ content: 'Only developers are allowed to run this command.', ephemeral: true });
+      return interaction.reply({ content: 'Only developers are allowed to run this command.', flags: MessageFlags.Ephemeral });
     }
 
     if (commandObject.permissionsRequired?.length) {
@@ -103,7 +105,7 @@ module.exports = {
         if (!interaction.member.permissions.has(permission)) {
           interaction.reply({
             content: 'You do not have the required permissions to run this command.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
           return;
         }

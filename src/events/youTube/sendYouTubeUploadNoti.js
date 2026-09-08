@@ -15,10 +15,39 @@ module.exports = async (client) => {
     console.log('YouTube upload notifier started.');
 
     const notifiedUploads = new Map(); // key: `${guildId}:${youtubeId}` -> videoId
+    // Cache resolved Channel IDs: username/handle -> UC... id
+    const channelIdCache = new Map();
 
-    const fetchUploadsForChannel = async (channelId) => {
-      // Use YouTube Data API to list latest videos for a channel
-      // We'll use 'search' endpoint with order=date and type=video
+    // Resolve a username, @handle, or Channel ID to a proper UC... Channel ID.
+    const resolveChannelId = async (idOrHandle) => {
+      if (/^UC[\w-]{22}$/.test(idOrHandle)) return idOrHandle;
+      if (channelIdCache.has(idOrHandle)) return channelIdCache.get(idOrHandle);
+
+      const handle = idOrHandle.startsWith('@') ? idOrHandle.slice(1) : idOrHandle;
+
+      try {
+        const res = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+          params: { key: YT_API_KEY, part: 'id', forHandle: handle },
+        });
+        const id = res.data.items?.[0]?.id;
+        if (id) { channelIdCache.set(idOrHandle, id); return id; }
+      } catch {}
+
+      try {
+        const res = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+          params: { key: YT_API_KEY, part: 'id', forUsername: handle },
+        });
+        const id = res.data.items?.[0]?.id;
+        if (id) { channelIdCache.set(idOrHandle, id); return id; }
+      } catch {}
+
+      console.warn(`[YT Upload] Could not resolve "${idOrHandle}" to a Channel ID. Use the UC... ID from the channel URL for guaranteed results.`);
+      return null;
+    };
+
+    const fetchUploadsForChannel = async (youtubeId) => {
+      const channelId = await resolveChannelId(youtubeId);
+      if (!channelId) return null;
       try {
         const res = await axios.get('https://www.googleapis.com/youtube/v3/search', {
           params: {
@@ -34,7 +63,7 @@ module.exports = async (client) => {
         if (items.length === 0) return null;
         return items[0];
       } catch (error) {
-        console.error('YouTube API error for channel', channelId, error.response?.data || error.message);
+        console.error('YouTube API error for channel', youtubeId, error.response?.data || error.message);
         return null;
       }
     };
@@ -80,8 +109,9 @@ module.exports = async (client) => {
         new ButtonBuilder().setLabel('Watch').setURL(videoUrl).setStyle(ButtonStyle.Link)
       );
 
+      const channelTitle = snippet.channelTitle || userEntry.youtubeId;
       try {
-        await channel.send({ content: config.customMessage?.replace('{user}', userEntry.youTubeId) || `**${userEntry.youTubeId}** uploaded a new video!`, embeds: [embed], components: [row] });
+        await channel.send({ content: config.customMessage?.replace('{user}', channelTitle) || `**${channelTitle}** uploaded a new video!`, embeds: [embed], components: [row] });
       } catch (err) {
         console.error('Failed to send YouTube upload notification to channel', config.channelId, err);
         // If send fails (permissions), we won't delete the binding automatically.

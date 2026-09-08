@@ -19,6 +19,7 @@ module.exports = {
         name: c.name,
         description: c.description || 'No description provided.',
         options: c.options || [],
+        default_member_permissions: c.default_member_permissions ?? undefined,
       }));
 
       const skipped = localCommands.filter(c => c.deleted).map(c => c.name);

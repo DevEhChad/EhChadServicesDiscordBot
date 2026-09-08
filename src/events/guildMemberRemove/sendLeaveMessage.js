@@ -23,7 +23,7 @@ module.exports = {
                     }));
 
                 if (!targetChannel) {
-                    continue; // Skip this config if channel not found
+                    continue; // Skip this config if channel not found (it may have been deleted)
                 }
 
                 const customMessage = leaveConfig.customMessage || 'Goodbye {username}. We will miss you at {server-name}.';
@@ -38,6 +38,8 @@ module.exports = {
                 await targetChannel.send({ content: leaveMessage }).catch(sendError => {
                     console.error(`[Leave] Error sending leave message to channel ${targetChannel.id}:`, sendError);
                 });
+
+                //console.log(`[Leave] ${guildMember.user.tag} has left ${guildMember.guild.name}`);
             }
         } catch (error) {
             console.error(`[Leave] Error in ${__filename}:`, error);

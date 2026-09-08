@@ -1,17 +1,17 @@
 const mongoose = require('mongoose');
 
-const YouTubeUserSchema = new mongoose.Schema({
+const YouTubeLiveUserSchema = new mongoose.Schema({
   youtubeId: { type: String, required: true },
   enabled: { type: Boolean, default: true },
-  lastVideoId: { type: String, default: null },
+  lastLiveVideoId: { type: String, default: null },
 });
 
-const YouTubeNotiSchema = new mongoose.Schema({
+const YouTubeLiveNotiSchema = new mongoose.Schema({
   guildId: { type: String, required: true, unique: true },
   channelId: { type: String, default: null },
   customMessage: { type: String, default: null },
-  users: [YouTubeUserSchema],
+  users: [YouTubeLiveUserSchema],
   enabled: { type: Boolean, default: true },
 });
 
-module.exports = mongoose.model('YouTubeNoti', YouTubeNotiSchema);
+module.exports = mongoose.model('YouTubeLiveNoti', YouTubeLiveNotiSchema);
