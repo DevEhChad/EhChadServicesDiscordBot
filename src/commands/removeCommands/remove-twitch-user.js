@@ -1,25 +1,25 @@
-const {
-    ApplicationCommandOptionType,
-    Client,
-    Interaction,
-    PermissionFlagsBits
-} = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 const TwitchUserSchema = require('../../schemas/TwitchUser');
 
 module.exports = {
 
-    /** 
-     * 
-     * @param {Client} client
-     * @param {Interaction} interaction
-     */
+    data: new SlashCommandBuilder()
+        .setName('remove-twitch-user')
+        .setDescription('removes a twitch user from the twitch user list.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addStringOption((option) =>
+            option
+                .setName('twitch-user')
+                .setDescription('The user to remove.')
+                .setRequired(true)
+        ),
 
-    callback: async (client, interaction,) => {
+    async execute(interaction) {
         try {
             const twitchUsername = interaction.options.getString('twitch-user').toLowerCase();
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const result = await TwitchUserSchema.deleteOne({
                 guildId: interaction.guildId,
@@ -29,31 +29,21 @@ module.exports = {
             if (result.deletedCount === 0) {
                 interaction.followUp({
                     content: `User "${twitchUsername}" was not found in the notification list.`,
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
                 return;
             }
 
             interaction.followUp({
                 content: `Successfully removed "${twitchUsername}" from the Twitch notification list.`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         } catch (error) {
             console.log(`Error in ${__filename}:\n`, error);
-            interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+            interaction.followUp({ content: 'An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
         }
     },
 
-    name: 'remove-twitch-user',
-    description: 'removes a twitch user from the twitch user list.',
-    options: [
-        {
-            name: 'twitch-user',
-            description: 'The user to remove.',
-            type: ApplicationCommandOptionType.String,
-            required: true,
-        }
-    ],
     permissionsRequired: [PermissionFlagsBits.Administrator],
     botPermissions: [PermissionFlagsBits.ManageChannels],
 

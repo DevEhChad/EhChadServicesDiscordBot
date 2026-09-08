@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
@@ -33,7 +33,7 @@ module.exports = {
             .setRequired(true))),
 
   async execute(interaction) {
-    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', ephemeral: true });
+    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', flags: MessageFlags.Ephemeral });
 
     const guildId = interaction.guild.id;
     const sub = interaction.options.getSubcommand();
@@ -46,35 +46,35 @@ module.exports = {
 
     if (sub === 'add') {
       if (doc.users.some(u => u.youtubeId === youtubeId)) {
-        return interaction.reply({ content: `\`${youtubeId}\` is already being monitored for this server.`, ephemeral: true });
+        return interaction.reply({ content: `\`${youtubeId}\` is already being monitored for this server.`, flags: MessageFlags.Ephemeral });
       }
       doc.users.push({ youtubeId, enabled: true });
       await doc.save();
       return interaction.reply({
         content: `✅ Added \`${youtubeId}\` to YouTube upload notifications.\nMake sure you've set a notification channel with \`/bind-youtube-channel\`.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
     } else if (sub === 'remove') {
       const exists = doc.users.some(u => u.youtubeId === youtubeId);
       if (!exists) {
-        return interaction.reply({ content: `\`${youtubeId}\` is not in the monitored list.`, ephemeral: true });
+        return interaction.reply({ content: `\`${youtubeId}\` is not in the monitored list.`, flags: MessageFlags.Ephemeral });
       }
       doc.users = doc.users.filter(u => u.youtubeId !== youtubeId);
       await doc.save();
-      return interaction.reply({ content: `✅ Removed \`${youtubeId}\` from YouTube upload notifications.`, ephemeral: true });
+      return interaction.reply({ content: `✅ Removed \`${youtubeId}\` from YouTube upload notifications.`, flags: MessageFlags.Ephemeral });
 
     } else if (sub === 'toggle') {
       const enabled = interaction.options.getBoolean('enabled');
       const user = doc.users.find(u => u.youtubeId === youtubeId);
       if (!user) {
-        return interaction.reply({ content: `\`${youtubeId}\` was not found. Add it first with \`/youtube-noti-user add\`.`, ephemeral: true });
+        return interaction.reply({ content: `\`${youtubeId}\` was not found. Add it first with \`/youtube-noti-user add\`.`, flags: MessageFlags.Ephemeral });
       }
       user.enabled = enabled;
       await doc.save();
       return interaction.reply({
         content: `✅ Notifications for \`${youtubeId}\` are now **${enabled ? 'enabled' : 'disabled'}**.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

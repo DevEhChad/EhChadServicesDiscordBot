@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
         .setRequired(false)),
 
   async execute(interaction) {
-    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', ephemeral: true });
+    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', flags: MessageFlags.Ephemeral });
 
     const channel = interaction.options.getChannel('channel');
     const customMessage = interaction.options.getString('custom-message');
@@ -41,7 +41,7 @@ module.exports = {
 
     return interaction.reply({
       content: `✅ YouTube upload notifications will be sent to ${channel}.${messageNote}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

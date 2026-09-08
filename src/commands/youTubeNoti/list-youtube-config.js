@@ -1,27 +1,25 @@
-const { Client, Interaction, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const YouTubeNoti = require('../../schemas/YouTubeNoti');
 
 module.exports = {
-  name: 'list-youtube-config',
-  description: 'Shows the current YouTube upload notification configuration for this server.',
-  options: [],
+  data: new SlashCommandBuilder()
+    .setName('list-youtube-config')
+    .setDescription('Shows the current YouTube upload notification configuration for this server.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+
   permissionsRequired: [PermissionFlagsBits.ManageChannels],
   botPermissions: [],
 
-  /**
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  callback: async (client, interaction) => {
+  async execute(interaction) {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const config = await YouTubeNoti.findOne({ guildId: interaction.guildId });
 
       if (!config) {
         return interaction.followUp({
           content: 'No YouTube notification configuration found for this server.\nGet started with `/bind-youtube-channel` and `/youtube-noti-user add`.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -41,17 +39,17 @@ module.exports = {
         .addFields(
           { name: 'Status', value: status, inline: true },
           { name: 'Notification Channel', value: notifChannel, inline: true },
-          { name: '\u200b', value: '\u200b', inline: true },
+          { name: '​', value: '​', inline: true },
           { name: 'Custom Message', value: customMessage, inline: false },
           { name: `Monitored Channels (${config.users.length})`, value: userList, inline: false },
         )
         .setFooter({ text: 'Tip: Use {user} in your custom message to include the YouTube channel name.' });
 
-      return interaction.followUp({ embeds: [embed], ephemeral: true });
+      return interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
     } catch (error) {
       console.log(`Error in ${__filename}:\n`, error);
-      return interaction.followUp({ content: 'An error occurred. Please try again.', ephemeral: true });
+      return interaction.followUp({ content: 'An error occurred. Please try again.', flags: MessageFlags.Ephemeral });
     }
   },
 };

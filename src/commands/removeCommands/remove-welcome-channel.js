@@ -1,19 +1,24 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const welcomeChannelSchema = require('../../schemas/WelcomeChannel');
 
 module.exports = {
 
-    /** 
-     * 
-     * @param {Client} client
-     * @param {Interaction} interaction
-     */
+    data: new SlashCommandBuilder()
+        .setName('remove-welcome-channel')
+        .setDescription('removes a welcome channel from sending welcome messages.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+        .addChannelOption((option) =>
+            option
+                .setName('target-channel')
+                .setDescription('The channel to get remove welcome messages in.')
+                .setRequired(true)
+        ),
 
-    callback: async (client, interaction,) => {
+    async execute(interaction) {
         try {
             const targetChannel = interaction.options.getChannel('target-channel');
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             const query = {
                 guildId: interaction.guildId,
@@ -23,16 +28,16 @@ module.exports = {
             const channelExistInDb = await welcomeChannelSchema.exists(query);
 
             if (!channelExistInDb) {
-                interaction.followUp({ content: 'That channel has not been configured for welcome messages.', ephemeral: true });
+                interaction.followUp({ content: 'That channel has not been configured for welcome messages.', flags: MessageFlags.Ephemeral });
                 return;
             }
 
             welcomeChannelSchema.findOneAndDelete(query)
                 .then(() => {
-                    interaction.followUp({ content: `Removed ${targetChannel} from receiving welcome messages.`, ephemeral: true });
+                    interaction.followUp({ content: `Removed ${targetChannel} from receiving welcome messages.`, flags: MessageFlags.Ephemeral });
                 })
                 .catch((error) => {
-                    interaction.followUp({ content: 'Database error. Please try again in a moment.', ephemeral: true });
+                    interaction.followUp({ content: 'Database error. Please try again in a moment.', flags: MessageFlags.Ephemeral });
                     console.log(`DB error in ${__filename}:\n`, error);
                 })
             return;
@@ -41,16 +46,6 @@ module.exports = {
         }
         return;
     },
-    name: 'remove-welcome-channel',
-    description: 'removes a welcome channel from sending welcome messages.',
-    options: [
-        {
-            name: 'target-channel',
-            description: 'The channel to get remove welcome messages in.',
-            type: ApplicationCommandOptionType.Channel,
-            required: true,
-        }
-    ],
     permissionsRequired: [PermissionFlagsBits.ManageChannels],
     botPermissions: [PermissionFlagsBits.ManageChannels],
 

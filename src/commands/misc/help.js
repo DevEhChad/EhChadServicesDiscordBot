@@ -1,17 +1,13 @@
-const { Client, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-/**
- * @param {Client} client
- * @param {Interaction} interaction
- */
-
 module.exports = {
-    name: 'help',
-    description: 'Provides a list of all commands and their descriptions.',
+    data: new SlashCommandBuilder()
+        .setName('help')
+        .setDescription('Provides a list of all commands and their descriptions.'),
 
-    callback: async (client, interaction) => {
+    async execute(interaction) {
         const commandsPath = path.join(__dirname, "..", "..", "commands/");
         const commandFiles = getAllCommandFiles(commandsPath);
 
@@ -81,13 +77,13 @@ module.exports = {
                     .setDisabled(currentPage === numPages || numPages === 0),
             );
 
-        const message = await interaction.reply({ embeds: [generateEmbed(currentPage)], components: [row], ephemeral: true, fetchReply: true });
+        const message = await interaction.reply({ embeds: [generateEmbed(currentPage)], components: [row], flags: MessageFlags.Ephemeral, fetchReply: true });
 
         const collector = message.createMessageComponentCollector({ time: 60000 });
 
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
-                return i.reply({ content: "You can't use these buttons!", ephemeral: true });
+                return i.reply({ content: "You can't use these buttons!", flags: MessageFlags.Ephemeral });
             }
 
             if (i.customId === 'prev_page' && currentPage > 1) {

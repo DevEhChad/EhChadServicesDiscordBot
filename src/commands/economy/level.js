@@ -1,7 +1,5 @@
 const {
-  Client,
-  Interaction,
-  ApplicationCommandOptionType,
+  SlashCommandBuilder,
   AttachmentBuilder,
 } = require('discord.js');
 const canvacord = require('canvacord');
@@ -9,12 +7,14 @@ const calculateLevelXp = require('../../utils/calculateLevelXp');
 const Level = require('../../schemas/level');
 
 module.exports = {
-  /**
-   *
-   * @param {Client} client
-   * @param {Interaction} interaction
-   */
-  callback: async (client, interaction) => {
+  data: new SlashCommandBuilder()
+    .setName('level')
+    .setDescription("Shows your/someone's level.")
+    .addMentionableOption((opt) =>
+      opt.setName('target-user').setDescription('The user whose level you want to see.')
+    ),
+
+  async execute(interaction) {
     if (!interaction.inGuild()) {
       interaction.reply('You can only run this command inside a server.');
       return;
@@ -67,15 +67,6 @@ module.exports = {
 
     const data = await rank.build();
     const attachment = new AttachmentBuilder(data);
-    interaction.editReply({ files: [attachment], epheremal: true });
+    interaction.editReply({ files: [attachment] });
   },
-  name: 'level',
-  description: "Shows your/someone's level.",
-  options: [
-    {
-      name: 'target-user',
-      description: 'The user whose level you want to see.',
-      type: ApplicationCommandOptionType.Mentionable,
-    },
-  ],
 };

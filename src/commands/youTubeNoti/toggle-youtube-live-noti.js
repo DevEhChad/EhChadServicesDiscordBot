@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const YouTubeLiveNoti = require('../../schemas/YouTubeLiveNoti');
 
 module.exports = {
@@ -12,7 +12,7 @@ module.exports = {
         .setRequired(true)),
 
   async execute(interaction) {
-    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', ephemeral: true });
+    if (!interaction.guild) return interaction.reply({ content: 'This command must be run in a guild.', flags: MessageFlags.Ephemeral });
 
     const enabled = interaction.options.getBoolean('enabled');
     const guildId = interaction.guild.id;
@@ -27,7 +27,7 @@ module.exports = {
     await doc.save();
     return interaction.reply({
       content: `✅ YouTube live stream notifications are now **${enabled ? 'enabled' : 'disabled'}** for this server.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

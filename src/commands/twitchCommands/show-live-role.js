@@ -1,29 +1,24 @@
-const { ApplicationCommandOptionType, Client, Interaction, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const NowLiveRoleSchema = require('../../schemas/NowLiveRole');
 
 module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('show-live-role')
+    .setDescription('Tells you the current now live role.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
-    /** 
-      * 
-      * @param {Client} client
-      * @param {Interaction} interaction
-    */
+  async execute(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    callback: async (client, interaction) => {
-        await interaction.deferReply({ ephemeral: true });
+    const liveRole = await NowLiveRoleSchema.findOne({ guildId: interaction.guildId });
 
-        const liveRole = await NowLiveRoleSchema.findOne({ guildId: interaction.guildId });
+    if (!liveRole) {
+      await interaction.followUp({ content: 'No Now Live role has been configured for this server.', flags: MessageFlags.Ephemeral });
+      return;
+    }
 
-        if (!liveRole) {
-            await interaction.followUp({ content: 'No Now Live role has been configured for this server.', ephemeral: true });
-            return;
-        }
-
-        await interaction.followUp({ content: `**Now Live Role:** <@&${liveRole.nowLiveRoleId}>`, ephemeral: true });
-    },
-    name: 'show-live-role',
-    description: 'Tells you the current now live role.',
-    options: [],
-    permissionsRequired: [PermissionFlagsBits.ManageChannels],
-    botPermissions: [PermissionFlagsBits.ManageChannels],
+    await interaction.followUp({ content: `**Now Live Role:** <@&${liveRole.nowLiveRoleId}>`, flags: MessageFlags.Ephemeral });
+  },
+  permissionsRequired: [PermissionFlagsBits.ManageChannels],
+  botPermissions: [PermissionFlagsBits.ManageChannels],
 };
