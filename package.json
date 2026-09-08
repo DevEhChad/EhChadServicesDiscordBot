@@ -7,13 +7,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-<<<<<<< HEAD
-    "start": "nodemon src/main.js"
-=======
     "start": "nodemon src/main.js",
     "lint": "node scripts/syntax-check.js",
     "test": "node scripts/syntax-check.js"
->>>>>>> dev1
   },
   "repository": {
     "type": "git",
